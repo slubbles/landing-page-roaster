@@ -154,6 +154,14 @@ export default function Home() {
       clearTimeout(timeout);
 
       if (!res.ok) throw new Error(data.error || 'Something went wrong');
+      
+      // Cache full result in sessionStorage for immediate results page load
+      if (data.result) {
+        try {
+          sessionStorage.setItem(`roast_${data.id}`, JSON.stringify(data.result));
+        } catch { /* storage full — results page will try server */ }
+      }
+      
       router.push(`/results/${data.id}`);
     } catch (err) {
       clearInterval(interval);

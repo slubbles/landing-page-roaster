@@ -1,26 +1,19 @@
 import { loadRoast } from '../../../lib/storage.js';
 import RoastResults from './RoastResults';
+import ClientResultsFallback from './ClientResultsFallback';
 
 export default async function ResultsPage({ params }) {
   const { id } = await params;
   
   const result = await loadRoast(id);
 
-  if (!result) {
-    return (
-      <main className="min-h-screen flex items-center justify-center">
-        <div className="text-center p-10">
-          <h1 className="text-3xl font-bold mb-4">Roast Not Found</h1>
-          <p className="text-zinc-500 mb-4">This roast doesn't exist or has expired.</p>
-          <a href="/" className="text-orange-500 hover:text-orange-400 transition-colors">
-            ← Get a new roast
-          </a>
-        </div>
-      </main>
-    );
+  // If server storage has the result, render it directly
+  if (result) {
+    return <RoastResults result={result} />;
   }
 
-  return <RoastResults result={result} />;
+  // Otherwise, render client fallback that reads from sessionStorage
+  return <ClientResultsFallback id={id} />;
 }
 
 export async function generateMetadata({ params }) {

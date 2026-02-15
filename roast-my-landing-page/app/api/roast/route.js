@@ -91,7 +91,8 @@ export async function POST(request) {
     return Response.json({ 
       id, 
       score: roast.overallScore,
-      verdict: roast.verdict 
+      verdict: roast.verdict,
+      result, // Full data for client-side caching (sessionStorage)
     });
 
   } catch (error) {
