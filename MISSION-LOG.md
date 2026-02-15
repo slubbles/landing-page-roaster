@@ -20,7 +20,7 @@
 
 **Revenue:** $0.00
 **Profit:** -$3.30
-**Products Live:** 0 (production-ready, pending deploy)
+**Products Live:** 1 (landing-page-roaster-nu.vercel.app)
 **Routes:** 9
 
 ---
@@ -343,7 +343,7 @@
 - **Concept:** Paste your URL → AI analyzes every conversion element → brutal, actionable teardown
 - **Price:** Free (basic) / $29 (PRO with competitor comp, A/B suggestions, copy rewrites)
 - **Status:** ✅ Production-ready — all deployment blockers resolved, marketing materials written
-- **URL:** Not yet deployed (Vercel next)
+- **URL:** https://landing-page-roaster-nu.vercel.app
 - **Revenue:** $0
 - **Users:** 0
 - **Tech:** Next.js 16 + puppeteer-core + @sparticuz/chromium + Claude API + Tailwind v4 + Framer Motion + @vercel/blob + Polar.sh
@@ -383,13 +383,13 @@ When this chat resumes or a new session starts:
 - **Runtime:** Node.js v24 (this Codespace)
 - **Framework:** Next.js 16.1.6 (Turbopack)
 - **Styling:** Tailwind CSS v4 (@tailwindcss/postcss) + Framer Motion + Lucide React + Magic UI (19 custom components)
-- **Hosting:** Vercel (free tier) — not yet deployed
-- **Analytics:** @vercel/analytics + @vercel/speed-insights
-- **Payments:** Polar.sh (@polar-sh/nextjs + @polar-sh/sdk) — code ready, needs org/product
-- **AI:** Anthropic Claude (claude-sonnet-4-20250514) — API key configured
-- **Browser:** puppeteer-core + @sparticuz/chromium (serverless) / puppeteer (local)
-- **Storage:** @vercel/blob (production) / filesystem (local dev)
-- **Repo:** github.com/slubbles/dump
+- **Hosting:** Vercel (Hobby tier) — LIVE at landing-page-roaster-nu.vercel.app
+- **Analytics:** @vercel/analytics + @vercel/speed-insights — enabled
+- **Payments:** Polar.sh — LIVE, "The Full Autopsy" $29 product, checkout link working
+- **AI:** Anthropic Claude (claude-sonnet-4-20250514) — max_tokens 3000, 50s timeout
+- **Browser:** puppeteer-core + @sparticuz/chromium-min (downloads binary at runtime)
+- **Storage:** Vercel Blob (production) / /tmp fallback / filesystem (local dev)
+- **Repo:** github.com/slubbles/landing-page-roaster
 
 ---
 
@@ -400,3 +400,55 @@ When this chat resumes or a new session starts:
 - No AI agent swarm — just me, executing directly
 - Free tiers everywhere to preserve budget
 - Speed > Perfection — ship fast, iterate
+
+---
+
+## 📅 SESSION LOG (continued)
+
+### Session 6 — Feb 15, 2026 (Production Hardening + Full Deploy)
+
+**Status:** ✅ COMPLETE
+
+**What Happened:**
+- **Performance optimization** — roast-engine.js rewritten for Vercel 60s limit:
+  - Time budget system: 20s scrape, 50s AI, 55s total
+  - `safePageOp()` crash protection wrapper (catches Target closed / Protocol error)
+  - Request interception: blocks media, fonts, websocket resources
+  - `waitUntil: 'load'` instead of `'networkidle2'`
+  - Navigation timeout 30s→15s, settle wait 2s→800ms
+  - Screenshots: PNG→JPEG (quality 60-70), hero first (least crash-prone)
+  - Full-page screenshot, accessibility, security, mobile analysis all time-budgeted
+  - All `page.evaluate()` calls wrapped with safePageOp + fallback values
+  - Extra Chrome args for faster serverless startup
+- **AI optimization:**
+  - Prompt trimmed: shorter format instructions, 1-2 sentence roasts
+  - max_tokens reduced 5000→3000
+  - AbortController timeout (50s) on Claude API fetch
+- **User completed deployment tasks:**
+  - Enabled Vercel Blob Store (BLOB_READ_WRITE_TOKEN auto-injected)
+  - Set NEXT_PUBLIC_APP_URL env var
+  - Enabled Vercel Analytics
+  - Set up Polar.sh product ("The Full Autopsy" $29)
+  - Added POLAR_ACCESS_TOKEN, POLAR_WEBHOOK_SECRET, NEXT_PUBLIC_POLAR_PRODUCT_ID
+  - Configured Polar webhook URL
+- **E2E Test Results (post-deploy):**
+  - All pages: 200 (/, /examples, /success)
+  - All API routes: 200 (/api/og, /api/roast)
+  - All assets: 200 (/favicon.svg, /robots.txt, /_vercel/insights/script.js)
+  - Polar checkout link: 200 (buy.polar.sh)
+  - Roast API: 40.7s, Score 3/100, 13/13 sections, screenshots + diagnostics
+  - Results page: SSR from storage, dynamic OG tags, dynamic title
+  - Error handling: invalid URL 400, localhost 400, rate limit 429
+  - Previous 401 errors on /api/og and /favicon.svg: resolved by redeploy
+
+**Timing Improvement:**
+- Before: 53-59s (example.com), frequent timeouts on complex sites
+- After: 40-44s (example.com), ~60s (complex sites like cal.com)
+
+**Current Status:** Product is FULLY LIVE and functional. All infrastructure configured.
+
+**Remaining:**
+- [ ] Step 6: Marketing launch (post content from LAUNCH-COPY.md)
+- [ ] Wire email capture to a mailing list service
+- [ ] Implement PRO tier gating (differentiate free vs paid roasts)
+- [ ] Iterate based on real user feedback
