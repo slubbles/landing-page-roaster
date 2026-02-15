@@ -13,7 +13,7 @@ import puppeteerCore from 'puppeteer-core';
 // TIME BUDGET — must finish within Vercel 60s limit
 // ────────────────────────────────────────────
 const SCRAPE_BUDGET_MS = 20000;  // 20s max for scraping
-const AI_BUDGET_MS    = 35000;   // 35s max for Claude
+const AI_BUDGET_MS    = 50000;   // 50s max for Claude (simple sites scrape in 2-5s)
 const TOTAL_BUDGET_MS = 55000;   // 55s total (5s safety buffer before 60s limit)
 
 /**
