@@ -18,7 +18,7 @@ async function getBrowser() {
     const chromium = (await import('@sparticuz/chromium-min')).default;
     
     const execPath = await chromium.executablePath(
-      'https://github.com/nichochar/chromium-brotli/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+      'https://github.com/Sparticuz/chromium/releases/download/v143.0.4/chromium-v143.0.4-pack.x64.tar'
     );
     
     return puppeteerCore.launch({
