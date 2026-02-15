@@ -16,6 +16,7 @@
 | API Spend (session 1) | -$3.00 | $97.00 |
 | API Spend (session 2 — stripe.com roast) | -$0.15 | $96.85 |
 | API Spend (session 3 — linear.app roast) | -$0.15 | $96.70 |
+| npm packages (session 5 — clsx, tw-merge, cva, analytics) | $0.00 | $96.70 |
 
 **Revenue:** $0.00
 **Profit:** -$3.30
@@ -237,6 +238,67 @@
 
 ---
 
+### Session 5 — Feb 15, 2026 (continued)
+
+**Status:** ✅ COMPLETE
+
+**What Happened:**
+- **Magic UI Integration** — created 19 custom component files from magicui.design:
+  - `components/magicui/`: animated-gradient-text, number-ticker, shimmer-button,
+    border-beam, particles, magic-card, typing-animation, blur-fade, meteors,
+    dot-pattern, animated-beam, bento-grid, animated-list, word-animations,
+    animated-circular-progress, marquee, shine-border, ripple, retro-grid
+  - Added `lib/utils.js` with `cn()` helper (clsx + twMerge)
+  - Added all Magic UI CSS keyframe animations to `globals.css`
+  - New dependencies: clsx, tailwind-merge, class-variance-authority
+- **Full page rewrites** — all 3 main pages rebuilt with Magic UI:
+  - Homepage: Particles bg, AnimatedGradientText badge, BlurFade entrances,
+    BorderBeam on input, ShimmerButton CTAs, Marquee scores, MagicCard features,
+    NumberTicker stats, WordPullUp headings, AnimatedCircularProgressBar demo,
+    ShineBorder loading, RetroGrid CTA
+  - Examples: Particles bg, MagicCard roast cards, AnimatedCircularProgressBar scores
+  - Results: MagicCard categories, BlurFade sections, BorderBeam screenshots,
+    ShimmerButton nav, ShineBorder priorities/wins
+- **QA & Bug Fixes** (9 bugs found and fixed):
+  - shimmer-button: removed duplicate children render + fixed `insert-0` → `inset-0`
+  - animated-circular-progress: SVG uses viewBox+CSS sizing instead of hardcoded 120x120
+  - particles: fixed splice-during-forEach (reverse iteration), moved dpr to useRef
+  - number-ticker: proper rAF + timeout cleanup on unmount
+  - page.js: removed 3 unused imports (Meteors, DotPattern, Ripple)
+  - RoastResults: added null guards on base64 screenshots
+- **Vercel Analytics** added:
+  - @vercel/analytics — automatic page view tracking
+  - @vercel/speed-insights — Core Web Vitals monitoring
+  - Both injected in layout.js, activate on Vercel deploy
+- Build clean: 9 routes, all static pages generated
+
+**Files Created:**
+- 19 files in `components/magicui/`
+- `lib/utils.js`
+
+**Files Modified:**
+- `app/page.js` — full rewrite with Magic UI
+- `app/examples/page.js` — full rewrite with Magic UI
+- `app/results/[id]/RoastResults.js` — full rewrite with Magic UI
+- `app/globals.css` — added ~120 lines of Magic UI keyframe animations
+- `app/layout.js` — added Analytics + SpeedInsights
+- `package.json` — added clsx, tailwind-merge, cva, @vercel/analytics, @vercel/speed-insights
+
+**Known Minor Issues (not blocking):**
+- No aria-label on URL/email inputs (a11y)
+- `window.location.href` used instead of Next.js router on examples/results
+- Marquee duplicated items lack aria-hidden
+- No page-level metadata on /examples
+
+**Remaining for User:**
+1. Create Polar.sh org + product → get token + product UUID
+2. Deploy to Vercel
+3. Set up Polar webhook
+4. Post marketing content from LAUNCH-COPY.md
+5. Share first public roasts on social media
+
+---
+
 ## 🏗️ PRODUCT PORTFOLIO
 
 ### Product 1: Landing Page Roast (PageRoast)
@@ -282,8 +344,9 @@ When this chat resumes or a new session starts:
 
 - **Runtime:** Node.js v24 (this Codespace)
 - **Framework:** Next.js 16.1.6 (Turbopack)
-- **Styling:** Tailwind CSS v4 (@tailwindcss/postcss) + Framer Motion + Lucide React
+- **Styling:** Tailwind CSS v4 (@tailwindcss/postcss) + Framer Motion + Lucide React + Magic UI (19 custom components)
 - **Hosting:** Vercel (free tier) — not yet deployed
+- **Analytics:** @vercel/analytics + @vercel/speed-insights
 - **Payments:** Polar.sh (@polar-sh/nextjs + @polar-sh/sdk) — code ready, needs org/product
 - **AI:** Anthropic Claude (claude-sonnet-4-20250514) — API key configured
 - **Browser:** puppeteer-core + @sparticuz/chromium (serverless) / puppeteer (local)
