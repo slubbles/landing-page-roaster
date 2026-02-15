@@ -48,7 +48,7 @@ export async function POST(request) {
     } catch (err) {
       console.error(`[ROAST ${id}] Scrape failed:`, err.message, err.stack);
       return Response.json(
-        { error: `Couldn't access that page — it may be blocking scrapers, behind a login, or taking too long to load.`, debug: process.env.NODE_ENV !== 'production' ? err.message : err.message.substring(0, 200) },
+        { error: `Couldn't access that page — it may be blocking scrapers, behind a login, or taking too long to load.`, debug: err.message.substring(0, 500) },
         { status: 422 }
       );
     }

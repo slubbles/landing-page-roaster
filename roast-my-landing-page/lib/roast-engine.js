@@ -70,9 +70,11 @@ async function getBrowser() {
  * performance metrics, accessibility checks, security issues
  */
 export async function scrapeLandingPage(url) {
+  let step = 'getBrowser';
   const browser = await getBrowser();
 
   try {
+    step = 'newPage';
     const page = await browser.newPage();
 
     // ────────────────────────────────────────────
@@ -83,64 +85,76 @@ export async function scrapeLandingPage(url) {
     const networkRequests = [];
     const jsErrors = [];
 
+    step = 'setupListeners';
     // Console log capture (errors, warnings, info)
     page.on('console', (msg) => {
-      const type = msg.type();
-      if (['error', 'warning', 'assert'].includes(type)) {
-        consoleMessages.push({
-          type,
-          text: msg.text().substring(0, 300),
-          location: msg.location()?.url || '',
-        });
-      }
+      try {
+        const type = msg.type();
+        if (['error', 'warning', 'assert'].includes(type)) {
+          consoleMessages.push({
+            type,
+            text: msg.text().substring(0, 300),
+            location: msg.location()?.url || '',
+          });
+        }
+      } catch (e) { /* ignore listener errors */ }
     });
 
     // JS exceptions
     page.on('pageerror', (error) => {
-      jsErrors.push({
-        message: error.message?.substring(0, 300) || String(error).substring(0, 300),
-        stack: error.stack?.substring(0, 200) || '',
-      });
+      try {
+        jsErrors.push({
+          message: error.message?.substring(0, 300) || String(error).substring(0, 300),
+          stack: error.stack?.substring(0, 200) || '',
+        });
+      } catch (e) { /* ignore listener errors */ }
     });
 
     // Network request tracking
     page.on('requestfailed', (req) => {
-      networkErrors.push({
-        url: req.url().substring(0, 200),
-        method: req.method(),
-        reason: req.failure()?.errorText || 'Unknown',
-        resourceType: req.resourceType(),
-      });
+      try {
+        networkErrors.push({
+          url: req.url().substring(0, 200),
+          method: req.method(),
+          reason: req.failure()?.errorText || 'Unknown',
+          resourceType: req.resourceType(),
+        });
+      } catch (e) { /* ignore listener errors */ }
     });
 
     page.on('response', (res) => {
-      const status = res.status();
-      const resUrl = res.url();
-      // Track failed responses (4xx, 5xx) and all requests for summary
-      if (status >= 400) {
-        networkErrors.push({
-          url: resUrl.substring(0, 200),
-          method: res.request().method(),
-          reason: `HTTP ${status}`,
+      try {
+        const status = res.status();
+        const resUrl = res.url();
+        // Track failed responses (4xx, 5xx) and all requests for summary
+        if (status >= 400) {
+          networkErrors.push({
+            url: resUrl.substring(0, 200),
+            method: res.request().method(),
+            reason: `HTTP ${status}`,
+            resourceType: res.request().resourceType(),
+          });
+        }
+        networkRequests.push({
+          url: resUrl.substring(0, 150),
+          status,
           resourceType: res.request().resourceType(),
+          size: parseInt(res.headers()['content-length'] || '0', 10),
         });
-      }
-      networkRequests.push({
-        url: resUrl.substring(0, 150),
-        status,
-        resourceType: res.request().resourceType(),
-        size: parseInt(res.headers()['content-length'] || '0', 10),
-      });
+      } catch (e) { /* ignore listener errors */ }
     });
     
+    step = 'setViewport';
     // Set desktop viewport
     await page.setViewport({ width: 1440, height: 900 });
     
+    step = 'setUserAgent';
     // Set a realistic user agent
     await page.setUserAgent(
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
     );
 
+    step = 'goto';
     // Navigate with timeout
     await page.goto(url, { 
       waitUntil: 'networkidle2', 
@@ -150,6 +164,7 @@ export async function scrapeLandingPage(url) {
     // Wait for content to settle
     await new Promise(r => setTimeout(r, 2000));
 
+    step = 'screenshotFull';
     // Take full-page screenshot
     const screenshotBuffer = await page.screenshot({ 
       fullPage: true,
@@ -157,6 +172,7 @@ export async function scrapeLandingPage(url) {
       encoding: 'base64'
     });
 
+    step = 'screenshotHero';
     // Take above-the-fold screenshot
     const heroScreenshot = await page.screenshot({
       type: 'png',
@@ -164,6 +180,7 @@ export async function scrapeLandingPage(url) {
       clip: { x: 0, y: 0, width: 1440, height: 900 }
     });
 
+    step = 'evaluatePageData';
     // Extract page data
     const pageData = await page.evaluate(() => {
       const getData = () => {
@@ -294,6 +311,7 @@ export async function scrapeLandingPage(url) {
       return getData();
     });
 
+    step = 'evaluatePerformance';
     // Performance metrics (Web Vitals style)
     const performance = await page.evaluate(() => {
       const timing = window.performance.timing;
@@ -332,6 +350,7 @@ export async function scrapeLandingPage(url) {
       };
     });
 
+    step = 'evaluateAccessibility';
     // Accessibility audit
     const accessibility = await page.evaluate(() => {
       const issues = [];
@@ -430,6 +449,7 @@ export async function scrapeLandingPage(url) {
       return issues;
     });
 
+    step = 'evaluateSecurity';
     // Security checks
     const security = await page.evaluate(() => {
       const issues = [];
@@ -465,16 +485,19 @@ export async function scrapeLandingPage(url) {
       return issues;
     });
 
+    step = 'mobileViewport';
     // Check mobile responsiveness
     await page.setViewport({ width: 375, height: 812 });
     await new Promise(r => setTimeout(r, 1000));
     
+    step = 'mobileScreenshot';
     const mobileScreenshot = await page.screenshot({
       type: 'png',
       encoding: 'base64',
       clip: { x: 0, y: 0, width: 375, height: 812 }
     });
 
+    step = 'evaluateMobileData';
     const mobileData = await page.evaluate(() => {
       const hasHorizontalScroll = document.documentElement.scrollWidth > window.innerWidth;
       const tooSmallText = [];
@@ -501,6 +524,7 @@ export async function scrapeLandingPage(url) {
       };
     });
 
+    step = 'compileDiagnostics';
     // ────────────────────────────────────────────
     // COMPILE DIAGNOSTICS
     // ────────────────────────────────────────────
@@ -547,6 +571,9 @@ export async function scrapeLandingPage(url) {
       scrapedAt: new Date().toISOString(),
     };
 
+  } catch (err) {
+    err.message = `[step:${step}] ${err.message}`;
+    throw err;
   } finally {
     await browser.close();
   }
