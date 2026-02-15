@@ -9,7 +9,7 @@ export const metadata = {
   icons: {
     icon: '/favicon.svg',
   },
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'http://localhost:3000')),
   openGraph: {
     title: 'PageRoast — Your Landing Page is Leaking Conversions 🔥',
     description: 'Paste a URL. Get a brutally honest AI teardown — hero, CTAs, copy, social proof, mobile, speed — scored in 30 seconds.',

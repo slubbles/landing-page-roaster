@@ -20,7 +20,6 @@
   "dependencies": {
     "@polar-sh/nextjs": "^0.9.3",
     "@polar-sh/sdk": "^0.43.1",
-    "@sparticuz/chromium": "^143.0.4",
     "@sparticuz/chromium-min": "^143.0.4",
     "@tailwindcss/postcss": "^4.1.18",
     "@vercel/analytics": "^1.6.1",
