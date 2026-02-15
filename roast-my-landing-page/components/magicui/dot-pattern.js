@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { cn } from "../../lib/utils";
 
 export function DotPattern({
@@ -10,7 +11,8 @@ export function DotPattern({
   cr = 1,
   className,
 }) {
-  const id = `dot-pattern-${Math.random().toString(36).substring(2)}`;
+  const reactId = useId();
+  const id = `dot-pattern-${reactId}`;
   return (
     <svg
       aria-hidden="true"
