@@ -9,6 +9,13 @@
 
 import puppeteerCore from 'puppeteer-core';
 
+// ────────────────────────────────────────────
+// TIME BUDGET — must finish within Vercel 60s limit
+// ────────────────────────────────────────────
+const SCRAPE_BUDGET_MS = 20000;  // 20s max for scraping
+const AI_BUDGET_MS    = 35000;   // 35s max for Claude
+const TOTAL_BUDGET_MS = 55000;   // 55s total (5s safety buffer before 60s limit)
+
 /**
  * Get a browser instance — works locally AND on Vercel/Lambda
  */
@@ -22,7 +29,16 @@ async function getBrowser() {
     );
     
     return puppeteerCore.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        '--disable-background-networking',
+        '--disable-default-apps',
+        '--disable-extensions',
+        '--disable-sync',
+        '--disable-translate',
+        '--metrics-recording-only',
+        '--no-first-run',
+      ],
       defaultViewport: chromium.defaultViewport,
       executablePath: execPath,
       headless: chromium.headless,
@@ -65,17 +81,45 @@ async function getBrowser() {
 }
 
 /**
+ * Safe wrapper for page operations — catches target-closed / protocol errors
+ */
+async function safePageOp(label, fn, fallback = null) {
+  try {
+    return await fn();
+  } catch (err) {
+    const msg = err.message || '';
+    if (msg.includes('Target closed') || msg.includes('Protocol error') || msg.includes('Session closed')) {
+      throw new Error(`[blocked] Page crashed during ${label} — site may be blocking scrapers`);
+    }
+    console.warn(`[scrape] ${label} failed (non-fatal): ${msg.substring(0, 150)}`);
+    return fallback;
+  }
+}
+
+/**
  * Capture screenshot and extract page data
- * Now with full browser diagnostics: console logs, network errors,
- * performance metrics, accessibility checks, security issues
+ * With browser diagnostics, crash protection, and time budgeting
  */
 export async function scrapeLandingPage(url) {
+  const scrapeStart = Date.now();
   let step = 'getBrowser';
   const browser = await getBrowser();
 
   try {
     step = 'newPage';
     const page = await browser.newPage();
+
+    // Block heavy resources to speed up page load
+    await page.setRequestInterception(true);
+    page.on('request', (req) => {
+      const type = req.resourceType();
+      // Block media, fonts, and large assets (we only need DOM + images for analysis)
+      if (['media', 'font', 'websocket'].includes(type)) {
+        req.abort();
+      } else {
+        req.continue();
+      }
+    });
 
     // ────────────────────────────────────────────
     // BROWSER DIAGNOSTICS: Capture everything
@@ -85,8 +129,6 @@ export async function scrapeLandingPage(url) {
     const networkRequests = [];
     const jsErrors = [];
 
-    step = 'setupListeners';
-    // Console log capture (errors, warnings, info)
     page.on('console', (msg) => {
       try {
         const type = msg.type();
@@ -97,20 +139,18 @@ export async function scrapeLandingPage(url) {
             location: msg.location()?.url || '',
           });
         }
-      } catch (e) { /* ignore listener errors */ }
+      } catch { /* ignore */ }
     });
 
-    // JS exceptions
     page.on('pageerror', (error) => {
       try {
         jsErrors.push({
           message: error.message?.substring(0, 300) || String(error).substring(0, 300),
           stack: error.stack?.substring(0, 200) || '',
         });
-      } catch (e) { /* ignore listener errors */ }
+      } catch { /* ignore */ }
     });
 
-    // Network request tracking
     page.on('requestfailed', (req) => {
       try {
         networkErrors.push({
@@ -119,14 +159,13 @@ export async function scrapeLandingPage(url) {
           reason: req.failure()?.errorText || 'Unknown',
           resourceType: req.resourceType(),
         });
-      } catch (e) { /* ignore listener errors */ }
+      } catch { /* ignore */ }
     });
 
     page.on('response', (res) => {
       try {
         const status = res.status();
         const resUrl = res.url();
-        // Track failed responses (4xx, 5xx) and all requests for summary
         if (status >= 400) {
           networkErrors.push({
             url: resUrl.substring(0, 200),
@@ -141,48 +180,57 @@ export async function scrapeLandingPage(url) {
           resourceType: res.request().resourceType(),
           size: parseInt(res.headers()['content-length'] || '0', 10),
         });
-      } catch (e) { /* ignore listener errors */ }
+      } catch { /* ignore */ }
     });
     
     step = 'setViewport';
-    // Set desktop viewport
     await page.setViewport({ width: 1440, height: 900 });
     
     step = 'setUserAgent';
-    // Set a realistic user agent
     await page.setUserAgent(
-      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36'
     );
 
     step = 'goto';
-    // Navigate with timeout
+    // Navigate — use 'load' instead of 'networkidle2' to avoid waiting for long-polling
     await page.goto(url, { 
-      waitUntil: 'networkidle2', 
-      timeout: 30000 
+      waitUntil: 'load', 
+      timeout: 15000 
     });
 
-    // Wait for content to settle
-    await new Promise(r => setTimeout(r, 2000));
+    // Brief settle (reduced from 2s)
+    await new Promise(r => setTimeout(r, 800));
 
-    step = 'screenshotFull';
-    // Take full-page screenshot
-    const screenshotBuffer = await page.screenshot({ 
-      fullPage: true,
-      type: 'png',
-      encoding: 'base64'
-    });
+    // ── Helper: check time budget ──
+    const timeLeft = () => SCRAPE_BUDGET_MS - (Date.now() - scrapeStart);
 
     step = 'screenshotHero';
-    // Take above-the-fold screenshot
-    const heroScreenshot = await page.screenshot({
-      type: 'png',
-      encoding: 'base64',
-      clip: { x: 0, y: 0, width: 1440, height: 900 }
-    });
+    // Hero screenshot first (most important, least likely to crash)
+    const heroScreenshot = await safePageOp('heroScreenshot', () =>
+      page.screenshot({
+        type: 'jpeg',
+        quality: 70,
+        encoding: 'base64',
+        clip: { x: 0, y: 0, width: 1440, height: 900 }
+      })
+    );
+
+    // Full-page screenshot (risky — can crash on huge/blocked pages)
+    step = 'screenshotFull';
+    let screenshotBuffer = null;
+    if (timeLeft() > 3000) {
+      screenshotBuffer = await safePageOp('fullScreenshot', () =>
+        page.screenshot({ 
+          fullPage: true,
+          type: 'jpeg',
+          quality: 60,
+          encoding: 'base64'
+        })
+      );
+    }
 
     step = 'evaluatePageData';
-    // Extract page data
-    const pageData = await page.evaluate(() => {
+    const pageData = await safePageOp('pageData', () => page.evaluate(() => {
       const getData = () => {
         // Title
         const title = document.title || '';
@@ -309,26 +357,35 @@ export async function scrapeLandingPage(url) {
       };
       
       return getData();
+    }), /* fallback pageData */ {
+      title: '', metaDesc: '', headings: [], buttons: [], images: [], forms: [],
+      socialProof: { hasTestimonials: false, hasNumbers: false, hasLogos: false, hasTrustBadges: false, hasStars: false },
+      pricing: { hasPricing: false, hasFreeOption: false },
+      navLinks: [], wordCount: 0, footerLinks: [], hasVideo: false, hasChatWidget: false,
+      bgColor: '', fontFamily: '', url,
     });
 
+    // If pageData came back empty, we couldn't read the page at all
+    if (!pageData || !pageData.title) {
+      // Check if we at least got a URL — if the evaluate worked but page was empty/blocked
+      const actualUrl = pageData?.url || url;
+      if (pageData) pageData.url = actualUrl;
+    }
+
     step = 'evaluatePerformance';
-    // Performance metrics (Web Vitals style)
-    const perfMetrics = await page.evaluate(() => {
+    const perfMetrics = await safePageOp('performance', () => page.evaluate(() => {
       const perf = window.performance;
       const timing = perf.timing;
       const paintEntries = perf.getEntriesByType('paint') || [];
       const navEntries = perf.getEntriesByType('navigation') || [];
       const resourceEntries = perf.getEntriesByType('resource') || [];
 
-      // LCP estimation
       const lcpEntries = perf.getEntriesByType('largest-contentful-paint') || [];
       const lcp = lcpEntries.length > 0 ? lcpEntries[lcpEntries.length - 1].startTime : null;
 
-      // CLS estimation
       const layoutShiftEntries = perf.getEntriesByType('layout-shift') || [];
       const cls = layoutShiftEntries.reduce((sum, e) => sum + (e.hadRecentInput ? 0 : e.value), 0);
 
-      // Resource breakdown
       const resourceBreakdown = {};
       resourceEntries.forEach(r => {
         const type = r.initiatorType || 'other';
@@ -349,11 +406,14 @@ export async function scrapeLandingPage(url) {
         resourceBreakdown,
         transferSize: navEntries[0]?.transferSize || 0,
       };
+    }), /* fallback */ {
+      loadTime: 0, domReady: 0, firstPaint: null, firstContentfulPaint: null,
+      largestContentfulPaint: null, cumulativeLayoutShift: 0, totalResources: 0,
+      resourceBreakdown: {}, transferSize: 0,
     });
 
     step = 'evaluateAccessibility';
-    // Accessibility audit
-    const accessibility = await page.evaluate(() => {
+    const accessibility = timeLeft() > 2000 ? await safePageOp('accessibility', () => page.evaluate(() => {
       const issues = [];
 
       // Images without alt text
@@ -448,11 +508,10 @@ export async function scrapeLandingPage(url) {
       }
 
       return issues;
-    });
+    }), []) : [];
 
     step = 'evaluateSecurity';
-    // Security checks
-    const security = await page.evaluate(() => {
+    const security = timeLeft() > 1500 ? await safePageOp('security', () => page.evaluate(() => {
       const issues = [];
       const url = window.location.href;
 
@@ -484,22 +543,31 @@ export async function scrapeLandingPage(url) {
       }
 
       return issues;
-    });
+    }), []) : [];
 
+    // ── Mobile analysis (only if time allows) ──
     step = 'mobileViewport';
-    // Check mobile responsiveness
-    await page.setViewport({ width: 375, height: 812 });
-    await new Promise(r => setTimeout(r, 1000));
-    
-    step = 'mobileScreenshot';
-    const mobileScreenshot = await page.screenshot({
-      type: 'png',
-      encoding: 'base64',
-      clip: { x: 0, y: 0, width: 375, height: 812 }
-    });
+    let mobileScreenshot = null;
+    let mobileData = { hasHorizontalScroll: false, tooSmallText: [], smallTouchTargets: 0 };
 
-    step = 'evaluateMobileData';
-    const mobileData = await page.evaluate(() => {
+    if (timeLeft() > 3000) {
+      await safePageOp('mobileViewport', async () => {
+        await page.setViewport({ width: 375, height: 812 });
+        await new Promise(r => setTimeout(r, 500));
+      });
+      
+      step = 'mobileScreenshot';
+      mobileScreenshot = await safePageOp('mobileScreenshot', () =>
+        page.screenshot({
+          type: 'jpeg',
+          quality: 70,
+          encoding: 'base64',
+          clip: { x: 0, y: 0, width: 375, height: 812 }
+        })
+      );
+
+      step = 'evaluateMobileData';
+      mobileData = await safePageOp('mobileData', () => page.evaluate(() => {
       const hasHorizontalScroll = document.documentElement.scrollWidth > window.innerWidth;
       const tooSmallText = [];
       document.querySelectorAll('p, span, a, li').forEach(el => {
@@ -523,7 +591,8 @@ export async function scrapeLandingPage(url) {
         tooSmallText: tooSmallText.slice(0, 10),
         smallTouchTargets,
       };
-    });
+    }), mobileData) || mobileData;
+    } // end if (timeLeft() > 3000)
 
     step = 'compileDiagnostics';
     // ────────────────────────────────────────────
@@ -582,22 +651,14 @@ export async function scrapeLandingPage(url) {
 
 /**
  * Generate the roast analysis using Claude API
- * Now with brutally sarcastic personality and technical evidence
+ * Uses claude-sonnet-4-20250514 with streaming disabled for speed
  */
 export async function generateRoast(scrapedData, tier = 'basic') {
   const { pageData, performance: perfMetrics, mobileData, diagnostics } = scrapedData;
   
-  const prompt = `You are "The Roast Master" — a savage, hilariously sarcastic AI that has reviewed 50,000+ landing pages and has ZERO patience for mediocrity. You are like a stand-up comedian who happens to be a world-class conversion rate optimization expert. You roast the PERSON who built this page, not just the page itself.
+  const prompt = `You are "The Roast Master" — a savage, sarcastic AI that reviews landing pages like Gordon Ramsay reviews food. You're a stand-up comedian AND a world-class CRO expert.
 
-Your personality:
-- You're the Gordon Ramsay of landing pages. Every mediocre element is a personal offense.
-- Use dark humor, sarcasm, pop culture references, and creative metaphors
-- When something is genuinely good, you begrudgingly admit it ("Fine, I'll give you this one")
-- Call out the developer/marketer directly — "whoever designed this..." or "the person who wrote this CTA..."
-- Use emojis for maximum roast energy: 🔥 💀 ☠️ 🚨 🗑️ 😤 🤦 👀 💩
-- Be SPECIFIC — reference actual content from the page, don't give generic advice
-- Mix brutal honesty with genuine actionable advice
-- If something is really bad, don't hold back. If it's good, be surprised about it.
+Rules: Be SPECIFIC (reference actual page content), funny, and actionable. Use emojis: 🔥 💀 🚨 🗑️ 😤 🤦 👀
 
 ANALYZE THIS LANDING PAGE AND ROAST IT:
 
@@ -669,120 +730,63 @@ MOBILE:
 
 ====== END DIAGNOSTICS ======
 
-Generate a DETAILED roast with these sections. Be BRUTALLY SARCASTIC and FUNNY. Make it personal. Reference actual elements and errors from the data. Use the diagnostics as ammunition — every console error is a punchline.
-
-REQUIRED OUTPUT FORMAT (JSON):
+Respond with ONLY valid JSON (no markdown fences). Be BRUTALLY SARCASTIC. Reference ACTUAL page content. Each roast should be 1-2 sentences.
 
 {
   "overallScore": <1-100>,
-  "verdict": "<one SAVAGE sentence summary — make it hurt but make it funny>",
-  "roasterComment": "<a 2-3 sentence sarcastic personal commentary to the page owner, like you're talking directly to them at a bar. Be funny, cutting, specific.>",
-  "heroSection": {
-    "score": <1-10>,
-    "roast": "<2-3 SARCASTIC sentences roasting the hero/above-fold — be personal, reference actual content>",
-    "issues": ["<issue 1>", "<issue 2>"],
-    "fixes": ["<specific fix 1>", "<specific fix 2>"]
-  },
-  "headline": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences>",
-    "issues": ["..."],
-    "fixes": ["..."],
-    "suggestedHeadline": "<your better headline>"
-  },
-  "cta": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences about the CTAs>",
-    "issues": ["..."],
-    "fixes": ["..."],
-    "suggestedCTA": "<your better CTA text>"
-  },
-  "socialProof": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences>",
-    "issues": ["..."],
-    "fixes": ["..."]
-  },
-  "copywriting": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences about the overall copy>",
-    "issues": ["..."],
-    "fixes": ["..."]
-  },
-  "design": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences>",
-    "issues": ["..."],
-    "fixes": ["..."]
-  },
-  "mobile": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences>",
-    "issues": ["..."],
-    "fixes": ["..."]
-  },
-  "performance": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences referencing ACTUAL metrics and errors>",
-    "issues": ["..."],
-    "fixes": ["..."]
-  },
-  "trustAndCredibility": {
-    "score": <1-10>,
-    "roast": "<2-3 sarcastic sentences>",
-    "issues": ["..."],
-    "fixes": ["..."]  
-  },
-  "diagnosticsRoast": {
-    "consoleErrors": "<1-2 sarcastic sentences about their console errors (or praising if none)>",
-    "networkIssues": "<1-2 sarcastic sentences about failed requests (or praising if none)>",
-    "accessibility": "<1-2 sarcastic sentences about a11y issues>",
-    "security": "<1-2 sarcastic sentences about security>",
-    "overallHealthVerdict": "<one brutal summary of the technical health>"
-  },
-  "topPriorities": [
-    "<#1 thing to fix immediately — be specific and sarcastic>",
-    "<#2 thing to fix>",
-    "<#3 thing to fix>"
-  ],
-  "quickWins": [
-    "<thing they can fix in 5 minutes>",
-    "<another quick fix>",
-    "<another quick fix>"
-  ],
-  "estimatedConversionLift": "<X-Y% if they implement all fixes>"
-}
+  "verdict": "<one SAVAGE sentence>",
+  "roasterComment": "<2-3 sentence personal commentary to the page owner>",
+  "heroSection": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."] },
+  "headline": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."], "suggestedHeadline": "<better headline>" },
+  "cta": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."], "suggestedCTA": "<better CTA>" },
+  "socialProof": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."] },
+  "copywriting": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."] },
+  "design": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."] },
+  "mobile": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."] },
+  "performance": { "score": <1-10>, "roast": "<1-2 sentences with ACTUAL metrics>", "issues": ["..."], "fixes": ["..."] },
+  "trustAndCredibility": { "score": <1-10>, "roast": "<1-2 sentences>", "issues": ["..."], "fixes": ["..."] },
+  "diagnosticsRoast": { "consoleErrors": "<1 sentence>", "networkIssues": "<1 sentence>", "accessibility": "<1 sentence>", "security": "<1 sentence>", "overallHealthVerdict": "<1 sentence>" },
+  "topPriorities": ["<#1 fix>", "<#2 fix>", "<#3 fix>"],
+  "quickWins": ["<5-min fix>", "<5-min fix>", "<5-min fix>"],
+  "estimatedConversionLift": "<X-Y%>"
+}`;
 
-REMEMBER: Be SPECIFIC. Reference actual elements, actual errors, actual content. Every recommendation must be actionable AND funny. Make them laugh while they cry. The best roasts are the ones where people screenshot them and share because they're hilarious AND true.`;
+  // Call Claude API with timeout
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_BUDGET_MS);
 
-  // Call Claude API
-  const response = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': process.env.ANTHROPIC_API_KEY,
-      'anthropic-version': '2023-06-01',
-    },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 5000,
-      messages: [{ role: 'user', content: prompt }],
-    }),
-  });
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 3000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`Claude API error: ${response.status} — ${err}`);
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Claude API error: ${response.status} — ${err}`);
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text;
+
+    // Parse JSON from response
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse roast analysis from AI response');
+    }
+
+    return JSON.parse(jsonMatch[0]);
+  } finally {
+    clearTimeout(timeout);
   }
-
-  const data = await response.json();
-  const text = data.content[0].text;
-
-  // Parse JSON from response
-  const jsonMatch = text.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error('Failed to parse roast analysis from AI response');
-  }
-
-  return JSON.parse(jsonMatch[0]);
 }
