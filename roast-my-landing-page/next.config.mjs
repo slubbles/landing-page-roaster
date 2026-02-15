@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  serverExternalPackages: ['puppeteer', 'puppeteer-core', '@sparticuz/chromium'],
+  serverExternalPackages: ['puppeteer', 'puppeteer-core'],
   outputFileTracingIncludes: {
     '/api/roast': ['./node_modules/@sparticuz/chromium/**/*'],
   },
