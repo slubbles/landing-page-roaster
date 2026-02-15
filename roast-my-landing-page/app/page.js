@@ -34,23 +34,25 @@ import { RetroGrid } from '../components/magicui/retro-grid';
 import { WordPullUp } from '../components/magicui/word-animations';
 import { AnimatedCircularProgressBar } from '../components/magicui/animated-circular-progress';
 import { cn } from '../lib/utils';
+import { TypingAnimation } from '../components/magicui/typing-animation';
+import { DotPattern } from '../components/magicui/dot-pattern';
 
 const FEATURES = [
-  { icon: Target, title: 'Hero Section', desc: 'Is your above-the-fold actually stopping the scroll?' },
-  { icon: MousePointer, title: 'CTAs & Buttons', desc: 'Button copy, placement, color, urgency — all scored.' },
-  { icon: PenTool, title: 'Copywriting', desc: 'Clarity, benefit-focus, power words, reading level.' },
-  { icon: Star, title: 'Social Proof', desc: 'Testimonials, logos, numbers — all the trust signals.' },
-  { icon: Smartphone, title: 'Mobile UX', desc: '60% of traffic is mobile. Is your page ready?' },
-  { icon: Zap, title: 'Page Speed', desc: 'Load time, DOM readiness, first paint metrics.' },
-  { icon: Shield, title: 'Trust Signals', desc: 'Guarantees, badges, privacy — all credibility checks.' },
-  { icon: Palette, title: 'Design & Layout', desc: 'Visual hierarchy, whitespace, color psychology.' },
-  { icon: BarChart3, title: 'Conversion Score', desc: '0-100 score with prioritized fixes and lift estimate.' },
+  { icon: Target, title: 'Hero Section', desc: 'We\'ll tell you if your hero makes people scroll... or leave forever.' },
+  { icon: MousePointer, title: 'CTAs & Buttons', desc: 'Your button says "Learn More." We\'ll tell you why nobody clicks it.' },
+  { icon: PenTool, title: 'Copywriting', desc: 'We read your copy out loud. We cringed. You\'re welcome.' },
+  { icon: Star, title: 'Social Proof', desc: '"Trusted by 3 people" is not social proof. We\'ll fix that.' },
+  { icon: Smartphone, title: 'Mobile UX', desc: '60% of your traffic is on mobile. 100% of them are suffering.' },
+  { icon: Zap, title: 'Page Speed', desc: 'Your page loads slower than a microwave. We timed it.' },
+  { icon: Shield, title: 'Trust Signals', desc: 'Console errors, security holes, missing headers — all exposed.' },
+  { icon: Palette, title: 'Design & Layout', desc: 'We\'ll tell you what your designer did wrong. Gently. (Just kidding.)' },
+  { icon: BarChart3, title: 'Bug Autopsy', desc: 'We open the browser console. We see what you broke. We judge you.' },
 ];
 
 const STEPS = [
-  { num: '01', title: 'Paste your URL', desc: 'Drop any landing page URL into the box' },
-  { num: '02', title: 'AI analyzes everything', desc: 'Screenshots, DOM analysis, mobile test, performance audit' },
-  { num: '03', title: 'Get your roast', desc: 'Brutal scores, specific issues, and exact fixes to implement' },
+  { num: '01', title: 'Paste your URL', desc: 'Drop your URL. We won\'t judge you yet. That comes in step 3.' },
+  { num: '02', title: 'We open your browser console', desc: 'Screenshots, DOM, console errors, network fails, accessibility, security — all captured.' },
+  { num: '03', title: 'The roast arrives', desc: 'Scores, bugs, sarcasm, and a copy-paste AI prompt to fix everything we found.' },
 ];
 
 // Sample roast scores for the marquee
@@ -87,14 +89,27 @@ export default function Home() {
   const router = useRouter();
 
   const loadingSteps = [
-    'Taking screenshots...',
-    'Analyzing hero section...',
-    'Checking CTAs...',
-    'Testing mobile experience...',
-    'Measuring performance...',
-    'Scanning social proof...',
-    'Generating your roast...',
+    { text: 'Warming up the flamethrower...', duration: 3000 },
+    { text: 'Taking screenshots of your crime scene...', duration: 5000 },
+    { text: 'Reading your copy (trying not to cry)...', duration: 4000 },
+    { text: 'Checking if your CTA even exists...', duration: 4000 },
+    { text: 'Testing mobile (spoiler: it\'s bad)...', duration: 4000 },
+    { text: 'Running console for hidden bugs...', duration: 3000 },
+    { text: 'Auditing accessibility...', duration: 3000 },
+    { text: 'Checking security headers...', duration: 2000 },
+    { text: 'Measuring how slow your page is...', duration: 3000 },
+    { text: 'Writing your roast (this is the fun part)...', duration: 8000 },
+    { text: 'Almost done — putting the final burns in...', duration: 5000 },
+    { text: 'Still cooking... your page had a lot of issues...', duration: 10000 },
   ];
+
+  // Calculate cumulative timestamps for progress bar
+  const totalEstimatedTime = loadingSteps.reduce((sum, s) => sum + s.duration, 0);
+  const stepTimestamps = loadingSteps.reduce((acc, s, i) => {
+    const prev = i === 0 ? 0 : acc[i - 1];
+    acc.push(prev + s.duration);
+    return acc;
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -111,9 +126,17 @@ export default function Home() {
     setLoading(true);
     setLoadingStep(0);
 
+    const startTime = Date.now();
     const interval = setInterval(() => {
-      setLoadingStep(prev => (prev + 1) % loadingSteps.length);
-    }, 3000);
+      const elapsed = Date.now() - startTime;
+      const nextStep = stepTimestamps.findIndex(t => elapsed < t);
+      if (nextStep >= 0) {
+        setLoadingStep(nextStep);
+      } else {
+        // Past all steps — stay on last one
+        setLoadingStep(loadingSteps.length - 1);
+      }
+    }, 500);
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 90000);
@@ -178,7 +201,7 @@ export default function Home() {
           <AnimatedGradientText className="mb-8">
             <Sparkles className="w-4 h-4 text-orange-500 mr-2" />
             <span className="text-sm text-zinc-300">
-              Free AI-powered conversion analysis
+              Free &middot; Brutal &middot; Includes AI fix prompt
             </span>
             <ChevronRight className="ml-1 size-3 transition-transform duration-300 ease-in-out group-hover:translate-x-0.5 text-zinc-500" />
           </AnimatedGradientText>
@@ -187,17 +210,18 @@ export default function Home() {
         {/* Headline with BlurFade */}
         <BlurFade delay={0.2}>
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-6">
-            Your landing page is
+            I will <span className="gradient-text">brutally roast</span>
             <br />
-            <span className="gradient-text">leaking conversions</span>
+            your website
           </h1>
         </BlurFade>
 
         {/* Subheadline */}
         <BlurFade delay={0.3}>
           <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-            Paste your URL and get a brutally honest AI teardown — hero,
-            CTAs, copy, social proof, mobile, speed — scored and roasted in 30 seconds.
+            Paste your URL. I&apos;ll open your console, read your code, check your
+            accessibility, time your load speed, and tell you everything that&apos;s wrong
+            — with sarcasm. Don&apos;t say I didn&apos;t warn you.
           </p>
         </BlurFade>
 
@@ -276,9 +300,9 @@ export default function Home() {
         {/* Trust line */}
         <BlurFade delay={0.5}>
           <div className="flex items-center justify-center gap-6 mt-6 text-xs text-zinc-600">
-            <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-600" /> Free instant roast</span>
-            <span className="hidden sm:flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> 30 second results</span>
-            <span className="flex items-center gap-1"><Target className="w-3 h-3 text-blue-600" /> Actionable fixes</span>
+            <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-600" /> Free. Actually free.</span>
+            <span className="hidden sm:flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> Console + network + a11y scan</span>
+            <span className="flex items-center gap-1"><Target className="w-3 h-3 text-blue-600" /> Copy-paste AI fix prompt</span>
           </div>
         </BlurFade>
 
@@ -305,13 +329,24 @@ export default function Home() {
                     key={loadingStep}
                     initial={{ opacity: 0, y: 5 }}
                     animate={{ opacity: 1, y: 0 }}
-                    className="text-zinc-400 text-sm mb-6"
+                    className="text-zinc-400 text-sm mb-4"
                   >
-                    {loadingSteps[loadingStep]}
+                    {loadingSteps[loadingStep]?.text}
                   </motion.p>
-                  <div className="h-1 bg-zinc-800 rounded-full overflow-hidden">
-                    <div className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full animate-progress" />
+                  <p className="text-zinc-600 text-xs mb-2">
+                    Step {loadingStep + 1} of {loadingSteps.length}
+                  </p>
+                  <div className="h-1.5 bg-zinc-800 rounded-full overflow-hidden">
+                    <motion.div
+                      className="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full"
+                      initial={{ width: '0%' }}
+                      animate={{ width: `${Math.min(((loadingStep + 1) / loadingSteps.length) * 100, 98)}%` }}
+                      transition={{ duration: 0.6, ease: 'easeOut' }}
+                    />
                   </div>
+                  <p className="text-zinc-700 text-[10px] mt-2">
+                    Usually takes 30-60 seconds. Hang tight.
+                  </p>
                 </div>
               </ShineBorder>
             </motion.div>
@@ -332,7 +367,7 @@ export default function Home() {
       <section className="relative z-10 px-6 py-20 max-w-4xl mx-auto">
         <BlurFade delay={0.1}>
           <WordPullUp
-            words="Three steps. Thirty seconds."
+            words="Three steps. Zero survivors."
             className="text-3xl font-bold text-center mb-16 tracking-tight text-white"
           />
         </BlurFade>
@@ -375,10 +410,10 @@ export default function Home() {
       <section className="relative z-10 px-6 py-20 max-w-5xl mx-auto">
         <BlurFade delay={0.1}>
           <h2 className="text-3xl font-bold text-center mb-4 tracking-tight">
-            9 categories. Zero mercy.
+            9 ways your site is embarrassing you
           </h2>
           <p className="text-zinc-500 text-center mb-16 max-w-lg mx-auto">
-            Every element that affects your conversion rate gets scored, roasted, and given specific fixes.
+            We score everything. We fix nothing. That&apos;s your job. (But we do give you a copy-paste prompt for your AI.)
           </p>
         </BlurFade>
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -398,9 +433,9 @@ export default function Home() {
       <section className="relative z-10 px-6 py-20 max-w-4xl mx-auto">
         <BlurFade delay={0.1}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">See it in action</h2>
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Even Stripe got roasted</h2>
             <p className="text-zinc-500 max-w-lg mx-auto">
-              Here&apos;s what we found when we roasted stripe.com
+              Nobody is safe. Not even billion-dollar companies.
             </p>
           </div>
         </BlurFade>
@@ -439,13 +474,19 @@ export default function Home() {
       </section>
 
       {/* ── Pricing ──────────────────────────── */}
-      <section id="pricing" className="relative z-10 px-6 py-20 max-w-4xl mx-auto">
-        <BlurFade delay={0.1}>
+      <section id="pricing" className="relative z-10 px-6 py-20 max-w-4xl mx-auto">        <DotPattern
+          className="absolute inset-0 -z-10 opacity-20 [mask-image:radial-gradient(500px_circle_at_center,white,transparent)]"
+          width={24}
+          height={24}
+          cr={1}
+          cx={1}
+          cy={1}
+        />        <BlurFade delay={0.1}>
           <h2 className="text-3xl font-bold text-center mb-4 tracking-tight">
-            Simple pricing
+            How much pain do you want?
           </h2>
           <p className="text-zinc-500 text-center mb-16">
-            Start free. Upgrade when you need deeper analysis.
+            The roast is free. The Full Autopsy is for masochists who want to actually fix their site.
           </p>
         </BlurFade>
 
@@ -453,11 +494,11 @@ export default function Home() {
           {/* Free */}
           <BlurFade delay={0.2}>
             <MagicCard className="p-8" gradientColor="#ffffff08">
-              <div className="text-sm font-medium text-zinc-500 mb-2">Free Roast</div>
+              <div className="text-sm font-medium text-zinc-500 mb-2">The Roast</div>
               <div className="text-4xl font-black mb-1">$0</div>
-              <p className="text-zinc-500 text-sm mb-8">Per page analysis</p>
+              <p className="text-zinc-500 text-sm mb-8">One page, maximum damage</p>
               <ul className="space-y-3 mb-8 text-sm">
-                {['Overall conversion score', 'Hero section analysis', 'CTA review', 'Top 3 priority fixes', 'Desktop & mobile screenshots'].map((item, i) => (
+                {['Conversion score (prepare yourself)', 'Console errors & bug detection', '9 category breakdown', 'Sarcastic AI commentary', 'Copy-paste AI fix prompt'].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-zinc-300">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
                     {item}
@@ -486,19 +527,19 @@ export default function Home() {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-xs font-bold z-10">
                   MOST POPULAR
                 </div>
-                <div className="text-sm font-medium text-orange-400 mb-2">Pro Roast</div>
+                <div className="text-sm font-medium text-orange-400 mb-2">The Full Autopsy</div>
                 <div className="text-4xl font-black mb-1">$29</div>
-                <p className="text-zinc-500 text-sm mb-8">Per deep-dive report</p>
+                <p className="text-zinc-500 text-sm mb-8">For people who actually want to fix their site</p>
                 <ul className="space-y-3 mb-8 text-sm">
                   {[
-                    'Everything in Free',
-                    'Full 9-category breakdown',
-                    'Competitor comparison (3 sites)',
-                    'A/B test suggestions',
-                    'Copywriting rewrites',
+                    'Everything in The Roast',
+                    'Competitor teardown (3 sites)',
+                    'A/B test ammunition',
+                    'Full copy rewrites (we wrote better ones)',
                     'Conversion lift estimate',
                     'Shareable report link',
                     'Priority email support',
+                    'We actually feel bad for you',
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-zinc-300">
                       <Check className="w-4 h-4 text-orange-500 shrink-0" />
@@ -513,7 +554,7 @@ export default function Home() {
                   className="w-full py-3 text-sm font-bold"
                   onClick={() => window.location.href = `/api/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID || ''}`}
                 >
-                  Get Pro Roast
+                  Request Full Autopsy
                 </ShimmerButton>
               </ShineBorder>
             </div>
@@ -527,10 +568,13 @@ export default function Home() {
         <BlurFade delay={0.1}>
           <div className="relative z-10 max-w-2xl mx-auto">
             <h2 className="text-4xl font-black mb-4 tracking-tight">
-              Stop guessing. Start converting.
+              Still here? Your landing page isn&apos;t going
+              <br />to fix itself.
             </h2>
             <p className="text-zinc-400 text-lg mb-8">
-              Every hour your landing page stays unoptimized, you&apos;re leaving money on the table.
+              Every hour you wait, someone bounces off your page and buys from your competitor.
+              <br />
+              <span className="text-orange-400/70">Don&apos;t say we didn&apos;t warn you.</span>
             </p>
             <ShimmerButton
               shimmerColor="#ff6b35"
@@ -541,7 +585,7 @@ export default function Home() {
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <Flame className="w-5 h-5 mr-2" />
-              Roast my page
+              Fine, roast me
               <ArrowRight className="w-5 h-5 ml-2" />
             </ShimmerButton>
           </div>

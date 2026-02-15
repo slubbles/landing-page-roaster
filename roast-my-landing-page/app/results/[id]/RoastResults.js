@@ -28,6 +28,8 @@ import {
   ChevronUp,
   Activity,
   Gauge,
+  Copy,
+  Wand2,
 } from 'lucide-react';
 
 // Magic UI Components
@@ -38,6 +40,8 @@ import { ShimmerButton } from '../../../components/magicui/shimmer-button';
 import { ShineBorder } from '../../../components/magicui/shine-border';
 import { NumberTicker } from '../../../components/magicui/number-ticker';
 import { AnimatedCircularProgressBar } from '../../../components/magicui/animated-circular-progress';
+import { Meteors } from '../../../components/magicui/meteors';
+import { DotPattern } from '../../../components/magicui/dot-pattern';
 import { cn } from '../../../lib/utils';
 
 /* ── helpers ─────────────────────────────────────────── */
@@ -456,6 +460,187 @@ function DiagnosticsPanel({ diagnostics, performance, roast }) {
   );
 }
 
+/* ── AI Fix Prompt Generator ─────────────────────────── */
+
+function generateFixPrompt(result) {
+  const { roast, url, diagnostics } = result;
+  
+  let prompt = `I just ran an automated audit on my website (${url}) and it found the following issues. Please fix ALL of them. Here's the complete report:\n\n`;
+  
+  prompt += `## Overall Score: ${roast.overallScore}/100\n`;
+  prompt += `Verdict: ${roast.verdict}\n\n`;
+  
+  // Top priorities
+  if (roast.topPriorities?.length) {
+    prompt += `## CRITICAL — Fix These First:\n`;
+    roast.topPriorities.forEach((p, i) => {
+      prompt += `${i + 1}. ${p}\n`;
+    });
+    prompt += '\n';
+  }
+  
+  // Quick wins
+  if (roast.quickWins?.length) {
+    prompt += `## Quick Wins (5-min fixes):\n`;
+    roast.quickWins.forEach((w, i) => {
+      prompt += `${i + 1}. ${w}\n`;
+    });
+    prompt += '\n';
+  }
+  
+  // Category breakdowns
+  const categories = [
+    { key: 'heroSection', name: 'Hero Section' },
+    { key: 'headline', name: 'Headline' },
+    { key: 'cta', name: 'Call-to-Action' },
+    { key: 'socialProof', name: 'Social Proof' },
+    { key: 'copywriting', name: 'Copywriting' },
+    { key: 'design', name: 'Design & UX' },
+    { key: 'mobile', name: 'Mobile Experience' },
+    { key: 'performance', name: 'Performance' },
+    { key: 'trustAndCredibility', name: 'Trust & Credibility' },
+  ];
+  
+  prompt += `## Detailed Category Breakdown:\n\n`;
+  categories.forEach(cat => {
+    const data = roast[cat.key];
+    if (!data) return;
+    prompt += `### ${cat.name} — Score: ${data.score}/10\n`;
+    if (data.issues?.length) {
+      prompt += `Issues:\n`;
+      data.issues.forEach(issue => prompt += `- ${issue}\n`);
+    }
+    if (data.fixes?.length) {
+      prompt += `Suggested Fixes:\n`;
+      data.fixes.forEach(fix => prompt += `- ${fix}\n`);
+    }
+    prompt += '\n';
+  });
+  
+  // Diagnostics
+  if (diagnostics) {
+    prompt += `## Browser Diagnostics:\n\n`;
+    
+    if (diagnostics.consoleErrors?.length) {
+      prompt += `### Console Errors (${diagnostics.consoleErrors.length}):\n`;
+      diagnostics.consoleErrors.forEach(e => prompt += `- ${e.text}\n`);
+      prompt += '\n';
+    }
+    
+    if (diagnostics.jsErrors?.length) {
+      prompt += `### JavaScript Exceptions (${diagnostics.jsErrors.length}):\n`;
+      diagnostics.jsErrors.forEach(e => prompt += `- ${e.message}\n`);
+      prompt += '\n';
+    }
+    
+    if (diagnostics.networkErrors?.length) {
+      prompt += `### Failed Network Requests (${diagnostics.networkErrors.length}):\n`;
+      diagnostics.networkErrors.forEach(e => prompt += `- ${e.method} ${e.url} → ${e.reason}\n`);
+      prompt += '\n';
+    }
+    
+    if (diagnostics.accessibility?.length) {
+      prompt += `### Accessibility Issues (${diagnostics.accessibility.length}):\n`;
+      diagnostics.accessibility.forEach(a => prompt += `- [${a.severity}] ${a.detail}\n`);
+      prompt += '\n';
+    }
+    
+    if (diagnostics.security?.length) {
+      prompt += `### Security Issues (${diagnostics.security.length}):\n`;
+      diagnostics.security.forEach(s => prompt += `- ${s.detail}\n`);
+      prompt += '\n';
+    }
+  }
+  
+  prompt += `\n---\nPlease provide the exact code changes needed to fix every issue listed above. Prioritize the CRITICAL items first, then Quick Wins, then work through each category. Show me the specific files and code blocks to change.`;
+  
+  return prompt;
+}
+
+function AIFixPromptSection({ result }) {
+  const [copied, setCopied] = useState(false);
+  const [expanded, setExpanded] = useState(false);
+  
+  const prompt = generateFixPrompt(result);
+  
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(prompt);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {
+      // Fallback
+      const ta = document.createElement('textarea');
+      ta.value = prompt;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+  
+  return (
+    <BlurFade delay={0.15}>
+      <div className="mt-10 mb-10">
+        <MagicCard className="p-6" gradientColor="#a855f715">
+          <div className="flex items-start gap-3 mb-4">
+            <div className="p-2 rounded-lg bg-purple-500/10 border border-purple-500/20">
+              <Wand2 className="w-5 h-5 text-purple-400" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-bold text-lg text-purple-300">Fix Everything with AI</h3>
+              <p className="text-zinc-500 text-sm mt-1">
+                We compiled every issue, bug, and roast into one prompt. Copy it, paste it into ChatGPT/Claude/Cursor, and let AI fix your site for you.
+              </p>
+            </div>
+          </div>
+          
+          {/* Preview */}
+          <div className="relative">
+            <div
+              className={cn(
+                "bg-zinc-950 border border-zinc-800 rounded-xl p-4 font-mono text-xs text-zinc-400 leading-relaxed overflow-hidden transition-all duration-300",
+                expanded ? "max-h-[500px] overflow-y-auto" : "max-h-32"
+              )}
+            >
+              <pre className="whitespace-pre-wrap">{prompt}</pre>
+            </div>
+            {!expanded && (
+              <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-zinc-950 to-transparent rounded-b-xl" />
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3 mt-4">
+            <button
+              onClick={handleCopy}
+              className={cn(
+                "flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm transition-all cursor-pointer",
+                copied
+                  ? "bg-green-500/10 border border-green-500/30 text-green-400"
+                  : "bg-purple-500/10 border border-purple-500/30 text-purple-300 hover:bg-purple-500/20"
+              )}
+            >
+              {copied ? (
+                <><CheckCircle2 className="w-4 h-4" /> Copied!</>
+              ) : (
+                <><Copy className="w-4 h-4" /> Copy AI Fix Prompt</>
+              )}
+            </button>
+            <button
+              onClick={() => setExpanded(!expanded)}
+              className="flex items-center gap-1 text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+            >
+              {expanded ? <><ChevronUp className="w-3 h-3" /> Collapse</> : <><ChevronDown className="w-3 h-3" /> Preview full prompt</>}
+            </button>
+          </div>
+        </MagicCard>
+      </div>
+    </BlurFade>
+  );
+}
+
 /* ── Main ────────────────────────────────────────────── */
 
 export default function RoastResults({ result }) {
@@ -495,7 +680,8 @@ export default function RoastResults({ result }) {
       <div className="max-w-4xl mx-auto px-5 py-12">
         {/* ── Overall Score ─────────────────── */}
         <BlurFade delay={0.1}>
-          <section className="text-center mb-14">
+          <section className="relative text-center mb-14 overflow-hidden rounded-2xl py-10">
+            <Meteors number={15} />
             <p className="text-zinc-600 text-sm mb-2">
               Roast for <span className="text-zinc-400">{url}</span>
             </p>
@@ -635,13 +821,23 @@ export default function RoastResults({ result }) {
         />
 
         {/* ── Category Breakdowns ────────────── */}
-        <BlurFade delay={0.1}>
-          <h2 className="text-2xl font-extrabold text-center mb-8">Detailed Breakdown</h2>
-        </BlurFade>
+        <div className="relative">
+          <DotPattern
+            className="absolute inset-0 -z-10 opacity-15 [mask-image:radial-gradient(600px_circle_at_center,white,transparent)]"
+            width={20}
+            height={20}
+            cr={0.8}
+            cx={1}
+            cy={1}
+          />
+          <BlurFade delay={0.1}>
+            <h2 className="text-2xl font-extrabold text-center mb-8">Detailed Breakdown</h2>
+          </BlurFade>
         <div className="space-y-4">
           {categories.map((cat, i) => (
             <CategoryCard key={cat.id} {...cat} index={i} />
           ))}
+        </div>
         </div>
 
         {/* ── Estimated Lift ──────────────────── */}
@@ -656,12 +852,15 @@ export default function RoastResults({ result }) {
           </BlurFade>
         )}
 
+        {/* ── AI Fix Prompt ──────────────────── */}
+        <AIFixPromptSection result={result} />
+
         {/* ── CTA / Share ─────────────────────── */}
         <section className="text-center py-14">
           <BlurFade delay={0.1}>
-            <h2 className="text-2xl font-extrabold mb-3">Want an Even Deeper Analysis?</h2>
+            <h2 className="text-2xl font-extrabold mb-3">Think You Can Handle the Full Autopsy?</h2>
             <p className="text-zinc-500 max-w-md mx-auto mb-8 text-sm leading-relaxed">
-              Get a PRO roast with competitor comparisons, A/B test suggestions, and a full conversion audit report.
+              Competitor teardowns, A/B test ammo, copy rewrites, and a conversion audit so thorough your designer will cry.
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <ShimmerButton
@@ -671,7 +870,7 @@ export default function RoastResults({ result }) {
                 className="px-7 py-3.5 font-bold"
                 onClick={() => window.location.href = `/api/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID || ''}`}
               >
-                Get PRO Roast — $29 <ArrowRight className="w-4 h-4 ml-2" />
+                Get the Full Autopsy — $29 <ArrowRight className="w-4 h-4 ml-2" />
               </ShimmerButton>
               <button
                 onClick={() => {
