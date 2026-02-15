@@ -8,6 +8,7 @@
  */
 
 import puppeteerCore from 'puppeteer-core';
+import chromium from '@sparticuz/chromium';
 
 /**
  * Get a browser instance — works locally AND on Vercel/Lambda
@@ -15,12 +16,11 @@ import puppeteerCore from 'puppeteer-core';
 async function getBrowser() {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_VERSION) {
     // Serverless environment — use stripped Chromium
-    const chromium = await import('@sparticuz/chromium');
     return puppeteerCore.launch({
-      args: chromium.default.args,
-      defaultViewport: chromium.default.defaultViewport,
-      executablePath: await chromium.default.executablePath(),
-      headless: chromium.default.headless,
+      args: chromium.args,
+      defaultViewport: chromium.defaultViewport,
+      executablePath: await chromium.executablePath(),
+      headless: chromium.headless,
     });
   }
 
