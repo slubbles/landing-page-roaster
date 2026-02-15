@@ -4,24 +4,22 @@
  * Scrapes a landing page, extracts key elements, and generates
  * an AI-powered conversion analysis ("roast").
  * 
- * Supports both local (full Puppeteer) and serverless (@sparticuz/chromium).
+ * Supports both local (full Puppeteer) and serverless (@sparticuz/chromium-min).
  */
 
-import { createRequire } from 'module';
-const _require = createRequire(import.meta.url);
+import puppeteerCore from 'puppeteer-core';
 
 /**
  * Get a browser instance — works locally AND on Vercel/Lambda
  */
 async function getBrowser() {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_VERSION) {
-    // Serverless environment — use stripped Chromium
-    // Use createRequire to bypass webpack bundling entirely
-    const chromium = _require('@sparticuz/chromium');
-    const puppeteerCore = _require('puppeteer-core');
+    // Serverless environment — use chromium-min (downloads binary at runtime)
+    const chromium = (await import('@sparticuz/chromium-min')).default;
     
-    const execPath = await chromium.executablePath();
-    console.log('[BROWSER] executablePath:', execPath);
+    const execPath = await chromium.executablePath(
+      'https://github.com/nichochar/chromium-brotli/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+    );
     
     return puppeteerCore.launch({
       args: chromium.args,
@@ -32,10 +30,9 @@ async function getBrowser() {
   }
 
   // Local development — try system Chrome, fall back to full puppeteer
-  const puppeteerCore = _require('puppeteer-core');
   try {
-    const puppeteer = _require('puppeteer');
-    return puppeteer.launch({
+    const puppeteer = await import('puppeteer');
+    return puppeteer.default.launch({
       headless: true,
       args: [
         '--no-sandbox',

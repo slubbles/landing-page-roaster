@@ -1,53 +1,23 @@
-import { createRequire } from 'module';
+import puppeteerCore from 'puppeteer-core';
 
 export const maxDuration = 30;
 
 export async function GET() {
-  const _require = createRequire(import.meta.url);
   const results = {};
   
-  // Test 1: Can we require chromium?
   try {
-    const chromium = _require('@sparticuz/chromium');
+    const chromium = (await import('@sparticuz/chromium-min')).default;
     results.chromiumLoaded = true;
-    results.chromiumType = typeof chromium;
-    results.chromiumKeys = Object.keys(chromium).slice(0, 10);
-    results.chromiumArgs = chromium.args?.slice(0, 3);
-  } catch (err) {
-    results.chromiumLoaded = false;
-    results.chromiumError = err.message;
-  }
-
-  // Test 2: Can we get executablePath?
-  try {
-    const chromium = _require('@sparticuz/chromium');
-    const execPath = await chromium.executablePath();
+    
+    const execPath = await chromium.executablePath(
+      'https://github.com/nichochar/chromium-brotli/releases/download/v131.0.1/chromium-v131.0.1-pack.tar'
+    );
     results.executablePath = execPath;
-    const fs = _require('fs');
-    results.executableExists = fs.existsSync(execPath);
-  } catch (err) {
-    results.execPathError = err.message;
-  }
-
-  // Test 3: Can we require puppeteer-core?
-  try {
-    const puppeteerCore = _require('puppeteer-core');
-    results.puppeteerLoaded = true;
-    results.puppeteerType = typeof puppeteerCore?.launch;
-  } catch (err) {
-    results.puppeteerLoaded = false;
-    results.puppeteerError = err.message;
-  }
-
-  // Test 4: Launch + navigate
-  try {
-    const chromium = _require('@sparticuz/chromium');
-    const puppeteerCore = _require('puppeteer-core');
     
     const browser = await puppeteerCore.launch({
       args: chromium.args,
       defaultViewport: chromium.defaultViewport,
-      executablePath: await chromium.executablePath(),
+      executablePath: execPath,
       headless: chromium.headless,
     });
     
@@ -59,8 +29,7 @@ export async function GET() {
     results.browserLaunched = true;
     results.pageTitle = title;
   } catch (err) {
-    results.browserLaunched = false;
-    results.browserError = err.message?.substring(0, 300);
+    results.error = err.message?.substring(0, 500);
   }
 
   results.env = {
