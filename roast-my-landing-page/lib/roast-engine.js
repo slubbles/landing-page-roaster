@@ -7,8 +7,8 @@
  * Supports both local (full Puppeteer) and serverless (@sparticuz/chromium).
  */
 
-import puppeteerCore from 'puppeteer-core';
 import { createRequire } from 'module';
+const _require = createRequire(import.meta.url);
 
 /**
  * Get a browser instance — works locally AND on Vercel/Lambda
@@ -16,9 +16,9 @@ import { createRequire } from 'module';
 async function getBrowser() {
   if (process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_VERSION) {
     // Serverless environment — use stripped Chromium
-    // Use createRequire to bypass webpack bundling (prevents minification errors)
-    const _require = createRequire(import.meta.url);
+    // Use createRequire to bypass webpack bundling entirely
     const chromium = _require('@sparticuz/chromium');
+    const puppeteerCore = _require('puppeteer-core');
     
     const execPath = await chromium.executablePath();
     console.log('[BROWSER] executablePath:', execPath);
@@ -32,9 +32,10 @@ async function getBrowser() {
   }
 
   // Local development — try system Chrome, fall back to full puppeteer
+  const puppeteerCore = _require('puppeteer-core');
   try {
-    const puppeteer = await import('puppeteer');
-    return puppeteer.default.launch({
+    const puppeteer = _require('puppeteer');
+    return puppeteer.launch({
       headless: true,
       args: [
         '--no-sandbox',
