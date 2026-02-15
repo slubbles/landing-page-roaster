@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Flame,
@@ -17,6 +18,16 @@ import {
   Share2,
   ArrowRight,
   TrendingUp,
+  Terminal,
+  Wifi,
+  WifiOff,
+  Eye,
+  Lock,
+  Bug,
+  ChevronDown,
+  ChevronUp,
+  Activity,
+  Gauge,
 } from 'lucide-react';
 
 // Magic UI Components
@@ -165,6 +176,286 @@ function CategoryCard({ id, title, data, index }) {
   );
 }
 
+/* ── DiagnosticsPanel ─────────────────────────────────── */
+
+function DiagnosticStatBadge({ label, value, color = 'zinc' }) {
+  const colors = {
+    green: 'bg-green-500/10 text-green-400 border-green-500/20',
+    red: 'bg-red-500/10 text-red-400 border-red-500/20',
+    yellow: 'bg-yellow-500/10 text-yellow-400 border-yellow-500/20',
+    orange: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
+    zinc: 'bg-zinc-800 text-zinc-300 border-zinc-700',
+  };
+  return (
+    <div className={cn('px-3 py-2 rounded-lg border text-center', colors[color])}>
+      <p className="text-lg font-black">{value}</p>
+      <p className="text-[10px] uppercase tracking-wider opacity-75">{label}</p>
+    </div>
+  );
+}
+
+function DiagnosticsPanel({ diagnostics, performance, roast }) {
+  const [expandConsole, setExpandConsole] = useState(false);
+  const [expandNetwork, setExpandNetwork] = useState(false);
+
+  if (!diagnostics) return null;
+
+  const consoleErrorCount = diagnostics.consoleErrors?.length || 0;
+  const jsErrorCount = diagnostics.jsErrors?.length || 0;
+  const networkFailCount = diagnostics.networkErrors?.length || 0;
+  const a11yCount = diagnostics.accessibility?.length || 0;
+  const securityCount = diagnostics.security?.length || 0;
+  const totalIssues = consoleErrorCount + jsErrorCount + networkFailCount + a11yCount + securityCount;
+
+  const healthColor = totalIssues === 0 ? 'green' : totalIssues < 5 ? 'yellow' : totalIssues < 10 ? 'orange' : 'red';
+
+  return (
+    <BlurFade delay={0.15}>
+      <div className="mb-12">
+        <h2 className="flex items-center gap-2 text-2xl font-extrabold text-center justify-center mb-2">
+          <Terminal className="w-6 h-6 text-orange-500" /> Crime Scene Evidence
+        </h2>
+        <p className="text-zinc-600 text-sm text-center mb-6">
+          What our browser found lurking under the hood
+        </p>
+
+        {/* Diagnostics Roast Comment */}
+        {roast?.diagnosticsRoast?.overallHealthVerdict && (
+          <MagicCard className="mb-6 p-5" gradientColor="#ff6b3510">
+            <p className="text-zinc-300 italic text-sm leading-relaxed">
+              <Bug className="w-4 h-4 text-orange-500 inline mr-1.5 -mt-0.5" />
+              &ldquo;{roast.diagnosticsRoast.overallHealthVerdict}&rdquo;
+            </p>
+          </MagicCard>
+        )}
+
+        {/* Stats Overview */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <DiagnosticStatBadge
+            label="Console Errors"
+            value={consoleErrorCount + jsErrorCount}
+            color={consoleErrorCount + jsErrorCount === 0 ? 'green' : 'red'}
+          />
+          <DiagnosticStatBadge
+            label="Failed Requests"
+            value={networkFailCount}
+            color={networkFailCount === 0 ? 'green' : networkFailCount < 3 ? 'yellow' : 'red'}
+          />
+          <DiagnosticStatBadge
+            label="A11y Issues"
+            value={a11yCount}
+            color={a11yCount === 0 ? 'green' : a11yCount < 3 ? 'yellow' : 'orange'}
+          />
+          <DiagnosticStatBadge
+            label="Security"
+            value={securityCount === 0 ? '✓' : securityCount}
+            color={securityCount === 0 ? 'green' : 'red'}
+          />
+        </div>
+
+        {/* Performance Metrics */}
+        {performance && (
+          <MagicCard className="mb-4 p-5" gradientColor="#ff6b3508">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-zinc-300 mb-3">
+              <Gauge className="w-4 h-4 text-orange-500" /> Performance Metrics
+            </h3>
+            {roast?.diagnosticsRoast?.consoleErrors && (
+              <p className="text-zinc-500 italic text-xs mb-3">
+                {roast.diagnosticsRoast.consoleErrors}
+              </p>
+            )}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {performance.loadTime && (
+                <div className="text-center">
+                  <p className={cn('text-lg font-bold', performance.loadTime < 3000 ? 'text-green-400' : performance.loadTime < 5000 ? 'text-yellow-400' : 'text-red-400')}>
+                    {(performance.loadTime / 1000).toFixed(1)}s
+                  </p>
+                  <p className="text-[10px] text-zinc-600 uppercase">Page Load</p>
+                </div>
+              )}
+              {performance.firstContentfulPaint && (
+                <div className="text-center">
+                  <p className={cn('text-lg font-bold', performance.firstContentfulPaint < 1800 ? 'text-green-400' : performance.firstContentfulPaint < 3000 ? 'text-yellow-400' : 'text-red-400')}>
+                    {(performance.firstContentfulPaint / 1000).toFixed(1)}s
+                  </p>
+                  <p className="text-[10px] text-zinc-600 uppercase">FCP</p>
+                </div>
+              )}
+              {performance.largestContentfulPaint && (
+                <div className="text-center">
+                  <p className={cn('text-lg font-bold', performance.largestContentfulPaint < 2500 ? 'text-green-400' : performance.largestContentfulPaint < 4000 ? 'text-yellow-400' : 'text-red-400')}>
+                    {(performance.largestContentfulPaint / 1000).toFixed(1)}s
+                  </p>
+                  <p className="text-[10px] text-zinc-600 uppercase">LCP</p>
+                </div>
+              )}
+              {performance.cumulativeLayoutShift !== undefined && (
+                <div className="text-center">
+                  <p className={cn('text-lg font-bold', performance.cumulativeLayoutShift < 0.1 ? 'text-green-400' : performance.cumulativeLayoutShift < 0.25 ? 'text-yellow-400' : 'text-red-400')}>
+                    {performance.cumulativeLayoutShift.toFixed(3)}
+                  </p>
+                  <p className="text-[10px] text-zinc-600 uppercase">CLS</p>
+                </div>
+              )}
+            </div>
+            {performance.totalResources && (
+              <p className="text-xs text-zinc-600 mt-3 text-center">
+                {performance.totalResources} resources loaded
+              </p>
+            )}
+          </MagicCard>
+        )}
+
+        {/* Console Errors */}
+        {(consoleErrorCount > 0 || jsErrorCount > 0) && (
+          <MagicCard className="mb-4 p-5" gradientColor="#ef444410">
+            <button
+              onClick={() => setExpandConsole(!expandConsole)}
+              className="flex items-center justify-between w-full text-left cursor-pointer"
+            >
+              <h3 className="flex items-center gap-2 text-sm font-bold text-red-400">
+                <Terminal className="w-4 h-4" /> Console Errors ({consoleErrorCount + jsErrorCount})
+              </h3>
+              {expandConsole ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+            </button>
+            {expandConsole && (
+              <div className="mt-3 space-y-2">
+                {diagnostics.jsErrors?.map((err, i) => (
+                  <div key={`js-${i}`} className="px-3 py-2 bg-red-500/5 border-l-2 border-red-500 rounded-r-lg text-xs font-mono text-red-300 overflow-x-auto">
+                    <span className="text-red-500 font-bold">💥 Exception:</span> {err.message}
+                  </div>
+                ))}
+                {diagnostics.consoleErrors?.map((err, i) => (
+                  <div key={`con-${i}`} className="px-3 py-2 bg-red-500/5 border-l-2 border-red-500 rounded-r-lg text-xs font-mono text-red-300 overflow-x-auto">
+                    <span className="text-red-500 font-bold">❌</span> {err.text}
+                  </div>
+                ))}
+              </div>
+            )}
+          </MagicCard>
+        )}
+
+        {/* Network Errors */}
+        {networkFailCount > 0 && (
+          <MagicCard className="mb-4 p-5" gradientColor="#f9731610">
+            <button
+              onClick={() => setExpandNetwork(!expandNetwork)}
+              className="flex items-center justify-between w-full text-left cursor-pointer"
+            >
+              <h3 className="flex items-center gap-2 text-sm font-bold text-orange-400">
+                <WifiOff className="w-4 h-4" /> Failed Network Requests ({networkFailCount})
+              </h3>
+              {expandNetwork ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+            </button>
+            {roast?.diagnosticsRoast?.networkIssues && (
+              <p className="text-zinc-500 italic text-xs mt-2">
+                {roast.diagnosticsRoast.networkIssues}
+              </p>
+            )}
+            {expandNetwork && (
+              <div className="mt-3 space-y-2">
+                {diagnostics.networkErrors?.map((err, i) => (
+                  <div key={i} className="px-3 py-2 bg-orange-500/5 border-l-2 border-orange-500 rounded-r-lg text-xs font-mono text-orange-300 overflow-x-auto">
+                    <span className="text-orange-500 font-bold">⛔ {err.method}</span>{' '}
+                    <span className="text-zinc-400">{err.url}</span>{' '}
+                    <span className="text-red-400">→ {err.reason}</span>{' '}
+                    <span className="text-zinc-600">({err.resourceType})</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </MagicCard>
+        )}
+
+        {/* Accessibility Issues */}
+        {a11yCount > 0 && (
+          <MagicCard className="mb-4 p-5" gradientColor="#eab30810">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-yellow-400 mb-3">
+              <Eye className="w-4 h-4" /> Accessibility Issues ({a11yCount})
+            </h3>
+            {roast?.diagnosticsRoast?.accessibility && (
+              <p className="text-zinc-500 italic text-xs mb-3">
+                {roast.diagnosticsRoast.accessibility}
+              </p>
+            )}
+            <div className="space-y-2">
+              {diagnostics.accessibility?.map((issue, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    'px-3 py-2 border-l-2 rounded-r-lg text-sm',
+                    issue.severity === 'error'
+                      ? 'bg-red-500/5 border-red-500 text-red-300'
+                      : 'bg-yellow-500/5 border-yellow-500 text-yellow-300'
+                  )}
+                >
+                  {issue.severity === 'error' ? '🚨' : '⚠️'} {issue.detail}
+                </div>
+              ))}
+            </div>
+          </MagicCard>
+        )}
+
+        {/* Security Issues */}
+        {securityCount > 0 && (
+          <MagicCard className="mb-4 p-5" gradientColor="#ef444410">
+            <h3 className="flex items-center gap-2 text-sm font-bold text-red-400 mb-3">
+              <Lock className="w-4 h-4" /> Security Issues ({securityCount})
+            </h3>
+            {roast?.diagnosticsRoast?.security && (
+              <p className="text-zinc-500 italic text-xs mb-3">
+                {roast.diagnosticsRoast.security}
+              </p>
+            )}
+            <div className="space-y-2">
+              {diagnostics.security?.map((issue, i) => (
+                <div key={i} className="px-3 py-2 bg-red-500/5 border-l-2 border-red-500 rounded-r-lg text-red-300 text-sm">
+                  🔒 {issue.detail}
+                </div>
+              ))}
+            </div>
+          </MagicCard>
+        )}
+
+        {/* Network Summary */}
+        {diagnostics.networkSummary && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <DiagnosticStatBadge
+              label="Total Requests"
+              value={diagnostics.networkSummary.totalRequests}
+              color="zinc"
+            />
+            <DiagnosticStatBadge
+              label="2xx OK"
+              value={diagnostics.networkSummary.byStatus?.['2xx'] || 0}
+              color="green"
+            />
+            <DiagnosticStatBadge
+              label="3xx Redirect"
+              value={diagnostics.networkSummary.byStatus?.['3xx'] || 0}
+              color="yellow"
+            />
+            <DiagnosticStatBadge
+              label="4xx/5xx Errors"
+              value={(diagnostics.networkSummary.byStatus?.['4xx'] || 0) + (diagnostics.networkSummary.byStatus?.['5xx'] || 0)}
+              color={(diagnostics.networkSummary.byStatus?.['4xx'] || 0) + (diagnostics.networkSummary.byStatus?.['5xx'] || 0) === 0 ? 'green' : 'red'}
+            />
+          </div>
+        )}
+
+        {/* All clear message */}
+        {totalIssues === 0 && (
+          <MagicCard className="p-5 text-center" gradientColor="#22c55e10">
+            <CheckCircle2 className="w-8 h-8 text-green-500 mx-auto mb-2" />
+            <p className="text-green-400 font-bold">Clean Bill of Health</p>
+            <p className="text-zinc-500 text-sm">No console errors, no failed requests, no accessibility or security issues. Impressive.</p>
+          </MagicCard>
+        )}
+      </div>
+    </BlurFade>
+  );
+}
+
 /* ── Main ────────────────────────────────────────────── */
 
 export default function RoastResults({ result }) {
@@ -231,6 +522,19 @@ export default function RoastResults({ result }) {
                 day: 'numeric',
               })}
             </p>
+
+            {/* Roaster's Personal Comment */}
+            {roast.roasterComment && (
+              <BlurFade delay={0.5}>
+                <MagicCard className="mt-6 p-5 max-w-lg mx-auto text-left" gradientColor="#ff6b3515">
+                  <p className="text-zinc-300 text-sm leading-relaxed italic">
+                    <Flame className="w-4 h-4 text-orange-500 inline mr-1.5 -mt-0.5" />
+                    &ldquo;{roast.roasterComment}&rdquo;
+                  </p>
+                  <p className="text-zinc-600 text-xs mt-2 text-right">— The PageRoast AI</p>
+                </MagicCard>
+              </BlurFade>
+            )}
           </section>
         </BlurFade>
 
@@ -322,6 +626,13 @@ export default function RoastResults({ result }) {
             </ShineBorder>
           </BlurFade>
         )}
+
+        {/* ── Crime Scene Evidence (Diagnostics) ─ */}
+        <DiagnosticsPanel
+          diagnostics={result.diagnostics}
+          performance={result.performance}
+          roast={roast}
+        />
 
         {/* ── Category Breakdowns ────────────── */}
         <BlurFade delay={0.1}>

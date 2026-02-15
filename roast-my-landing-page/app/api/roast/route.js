@@ -79,6 +79,7 @@ export async function POST(request) {
       pageData: scrapedData.pageData,
       performance: scrapedData.performance,
       mobileData: scrapedData.mobileData,
+      diagnostics: scrapedData.diagnostics,
       createdAt: new Date().toISOString(),
     };
 
