@@ -39,6 +39,7 @@ const STEPS = [
 
 export default function Home() {
   const [url, setUrl] = useState('');
+  const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [loadingStep, setLoadingStep] = useState(0);
@@ -82,7 +83,7 @@ export default function Home() {
       const res = await fetch('/api/roast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: cleanUrl }),
+        body: JSON.stringify({ url: cleanUrl, email: email.trim() || undefined }),
         signal: controller.signal,
       });
 
@@ -118,9 +119,14 @@ export default function Home() {
           <Flame className="w-6 h-6 text-orange-500" />
           <span className="font-bold text-lg tracking-tight">PageRoast</span>
         </div>
-        <a href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
-          Pricing
-        </a>
+        <div className="flex items-center gap-5">
+          <a href="/examples" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            Examples
+          </a>
+          <a href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
+            Pricing
+          </a>
+        </div>
       </nav>
 
       {/* Hero */}
@@ -167,17 +173,18 @@ export default function Home() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="max-w-xl mx-auto"
         >
-          <div className="flex gap-2 p-1.5 rounded-2xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm">
-            <input
-              type="text"
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://your-landing-page.com"
-              required
-              disabled={loading}
-              className="flex-1 px-4 py-3.5 bg-transparent text-white placeholder-zinc-600 outline-none text-base rounded-xl disabled:opacity-50"
-            />
-            <button
+          <div className="rounded-2xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-1.5 space-y-1.5">
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+                placeholder="https://your-landing-page.com"
+                required
+                disabled={loading}
+                className="flex-1 px-4 py-3.5 bg-transparent text-white placeholder-zinc-600 outline-none text-base rounded-xl disabled:opacity-50"
+              />
+              <button
               type="submit"
               disabled={loading}
               className={`
@@ -204,6 +211,19 @@ export default function Home() {
                 </span>
               )}
             </button>
+            </div>
+
+            {/* Optional email */}
+            <div className="flex items-center gap-2 px-3 pb-1">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@email.com (optional — get results emailed)"
+                disabled={loading}
+                className="flex-1 px-2 py-2 bg-transparent text-sm text-zinc-300 placeholder-zinc-600 outline-none disabled:opacity-50"
+              />
+            </div>
           </div>
 
           {/* Error */}
@@ -229,7 +249,7 @@ export default function Home() {
           className="flex items-center justify-center gap-6 mt-6 text-xs text-zinc-600"
         >
           <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-600" /> Free instant roast</span>
-          <span className="flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> 30 second results</span>
+          <span className="hidden sm:flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> 30 second results</span>
           <span className="flex items-center gap-1"><Target className="w-3 h-3 text-blue-600" /> Actionable fixes</span>
         </motion.div>
 

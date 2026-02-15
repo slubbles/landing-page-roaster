@@ -20,6 +20,7 @@
 **Revenue:** $0.00
 **Profit:** -$3.30
 **Products Live:** 0 (production-ready, pending deploy)
+**Routes:** 9
 
 ---
 
@@ -79,6 +80,12 @@
 - [x] Add dynamic OG images (/api/og)
 - [x] Improve error UX (URL blocks, AbortController timeout, specific error msgs)
 - [x] Live test — linear.app scored 42/100 ✅
+- [x] Build social proof — examples gallery with 6 famous landing page roasts
+- [x] Add email capture on free roast form
+- [x] Wire nav links across all pages (Examples, home, etc.)
+- [x] Mobile responsiveness polish (responsive grids, hidden elements)
+- [x] Create LAUNCH-COPY.md — Twitter, Reddit, IndieHackers, PH copy
+- [x] Create project README.md
 - [ ] Set up Polar.sh org + product ($29 PRO Roast) — needs user
 - [ ] Fill in POLAR_ACCESS_TOKEN, WEBHOOK_SECRET, PRODUCT_ID in .env.local
 - [ ] Deploy to Vercel + add Blob storage
@@ -176,22 +183,77 @@
 
 ---
 
+### Session 4 — Feb 15, 2026 (continued)
+
+**Status:** ✅ COMPLETE
+
+**What Happened:**
+- Created `/examples` gallery page with 6 pre-generated sample roasts:
+  - stripe.com (72), linear.app (42), notion.so (65), vercel.com (58), calendly.com (78), dropbox.com (51)
+  - ScoreBadge + MiniBar visualization components
+  - Framer Motion animations, consistent branding
+- Added email capture to free roast form:
+  - Optional email input below URL field ("you@email.com — get results emailed")
+  - Sent to API alongside URL, stored in roast result data
+  - API route already had `email` field wired — just needed frontend input
+- Wired navigation across all pages:
+  - Homepage nav: added "Examples" link alongside "Pricing"
+  - Examples page: has logo → home link + "Roast Your Page" CTA button
+  - Results page: has logo → home link + "Roast Another" CTA button
+  - All pages have consistent footer branding
+- Mobile responsiveness polish:
+  - Results screenshots grid: `grid-cols-1 sm:grid-cols-[2fr_1fr]` (stacks on mobile)
+  - Homepage trust badges: middle badge hidden on small screens
+  - Examples gallery already responsive (md:grid-cols-2)
+  - Pricing cards already responsive (md:grid-cols-2)
+- Created `LAUNCH-COPY.md` — complete marketing materials:
+  - Twitter/X launch thread (4 tweets)
+  - 4 standalone tweets for drip posting
+  - Reddit posts for r/startups, r/SaaS, r/Entrepreneur, r/webdesign
+  - IndieHackers launch post
+  - Product Hunt taglines
+  - Email subject lines
+  - One-liner descriptions
+- Created `README.md` for the project:
+  - Features, tech stack table, quick start, env vars, project structure
+  - How it works flow, deployment instructions
+- Build clean: 9 routes (added /examples), 0 errors
+
+**Files Created/Modified:**
+- `app/examples/page.js` — NEW gallery page (~200 lines)
+- `app/page.js` — MODIFIED: added email input, Examples nav link, mobile fixes
+- `app/results/[id]/RoastResults.js` — MODIFIED: responsive screenshots grid
+- `LAUNCH-COPY.md` — NEW marketing copy document
+- `README.md` — NEW project README
+
+**Status:** App is launch-ready. Marketing materials written. Only blocking items are user-dependent.
+
+**Remaining for User:**
+1. Create Polar.sh org + product → get token + product UUID
+2. Deploy to Vercel
+3. Set up Polar webhook
+4. Post marketing content from LAUNCH-COPY.md
+5. Share first public roasts on social media
+
+---
+
 ## 🏗️ PRODUCT PORTFOLIO
 
 ### Product 1: Landing Page Roast (PageRoast)
 - **Concept:** Paste your URL → AI analyzes every conversion element → brutal, actionable teardown
 - **Price:** Free (basic) / $29 (PRO with competitor comp, A/B suggestions, copy rewrites)
-- **Status:** ✅ Production-ready — all deployment blockers resolved
+- **Status:** ✅ Production-ready — all deployment blockers resolved, marketing materials written
 - **URL:** Not yet deployed (Vercel next)
 - **Revenue:** $0
 - **Users:** 0
 - **Tech:** Next.js 16 + puppeteer-core + @sparticuz/chromium + Claude API + Tailwind v4 + Framer Motion + @vercel/blob + Polar.sh
-- **Routes:** 8 (/, /api/checkout, /api/og, /api/roast, /api/webhook/polar, /results/[id], /success, /_not-found)
+- **Routes:** 9 (/, /examples, /api/checkout, /api/og, /api/roast, /api/webhook/polar, /results/[id], /success, /_not-found)
 - **Files:**
   - `lib/roast-engine.js` — scrape + AI analysis (serverless-ready)
   - `lib/storage.js` — Vercel Blob / filesystem adapter
   - `lib/rate-limit.js` — 5 reqs/hr/IP sliding window
-  - `app/page.js` — homepage with Tailwind + Framer Motion
+  - `app/page.js` — homepage with Tailwind + Framer Motion + email capture
+  - `app/examples/page.js` — gallery of 6 sample roasts (social proof)
   - `app/api/roast/route.js` — POST handler with rate limit + error handling
   - `app/api/checkout/route.js` — Polar.sh checkout
   - `app/api/webhook/polar/route.js` — payment webhook
@@ -200,6 +262,8 @@
   - `app/results/[id]/RoastResults.js` — client component, full report UI
   - `app/success/page.js` — payment confirmation
   - `vercel.json` — function config + security headers
+  - `LAUNCH-COPY.md` — ready-to-post marketing materials
+  - `README.md` — project documentation
 
 ---
 

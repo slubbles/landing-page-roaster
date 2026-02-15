@@ -255,7 +255,7 @@ export default function RoastResults({ result }) {
         </section>
 
         {/* ── Screenshots ───────────────────── */}
-        <section className="grid grid-cols-[2fr_1fr] gap-4 mb-14">
+        <section className="grid grid-cols-1 sm:grid-cols-[2fr_1fr] gap-4 mb-14">
           <div>
             <p className="text-xs text-zinc-600 mb-2">Desktop</p>
             <img
