@@ -313,18 +313,19 @@ export async function scrapeLandingPage(url) {
 
     step = 'evaluatePerformance';
     // Performance metrics (Web Vitals style)
-    const performance = await page.evaluate(() => {
-      const timing = window.performance.timing;
-      const paintEntries = performance.getEntriesByType('paint') || [];
-      const navEntries = performance.getEntriesByType('navigation') || [];
-      const resourceEntries = performance.getEntriesByType('resource') || [];
+    const perfMetrics = await page.evaluate(() => {
+      const perf = window.performance;
+      const timing = perf.timing;
+      const paintEntries = perf.getEntriesByType('paint') || [];
+      const navEntries = perf.getEntriesByType('navigation') || [];
+      const resourceEntries = perf.getEntriesByType('resource') || [];
 
       // LCP estimation
-      const lcpEntries = performance.getEntriesByType('largest-contentful-paint') || [];
+      const lcpEntries = perf.getEntriesByType('largest-contentful-paint') || [];
       const lcp = lcpEntries.length > 0 ? lcpEntries[lcpEntries.length - 1].startTime : null;
 
       // CLS estimation
-      const layoutShiftEntries = performance.getEntriesByType('layout-shift') || [];
+      const layoutShiftEntries = perf.getEntriesByType('layout-shift') || [];
       const cls = layoutShiftEntries.reduce((sum, e) => sum + (e.hadRecentInput ? 0 : e.value), 0);
 
       // Resource breakdown
@@ -565,7 +566,7 @@ export async function scrapeLandingPage(url) {
         mobile: mobileScreenshot,
       },
       pageData,
-      performance,
+      performance: perfMetrics,
       mobileData,
       diagnostics,
       scrapedAt: new Date().toISOString(),
@@ -584,7 +585,7 @@ export async function scrapeLandingPage(url) {
  * Now with brutally sarcastic personality and technical evidence
  */
 export async function generateRoast(scrapedData, tier = 'basic') {
-  const { pageData, performance, mobileData, diagnostics } = scrapedData;
+  const { pageData, performance: perfMetrics, mobileData, diagnostics } = scrapedData;
   
   const prompt = `You are "The Roast Master" — a savage, hilariously sarcastic AI that has reviewed 50,000+ landing pages and has ZERO patience for mediocrity. You are like a stand-up comedian who happens to be a world-class conversion rate optimization expert. You roast the PERSON who built this page, not just the page itself.
 
@@ -631,14 +632,14 @@ NAV LINKS: ${pageData.navLinks.join(', ')}
 ====== BROWSER DIAGNOSTICS (THE CRIME SCENE EVIDENCE) ======
 
 PERFORMANCE METRICS:
-- Page Load: ${performance.loadTime}ms
-- DOM Ready: ${performance.domReady}ms
-- First Paint: ${performance.firstPaint ? Math.round(performance.firstPaint) + 'ms' : 'N/A'}
-- First Contentful Paint: ${performance.firstContentfulPaint ? Math.round(performance.firstContentfulPaint) + 'ms' : 'N/A'}
-- Largest Contentful Paint: ${performance.largestContentfulPaint ? Math.round(performance.largestContentfulPaint) + 'ms' : 'N/A'}
-- Cumulative Layout Shift: ${performance.cumulativeLayoutShift}
-- Total Resources: ${performance.totalResources}
-${performance.resourceBreakdown ? `- Resource Breakdown: ${JSON.stringify(performance.resourceBreakdown)}` : ''}
+- Page Load: ${perfMetrics.loadTime}ms
+- DOM Ready: ${perfMetrics.domReady}ms
+- First Paint: ${perfMetrics.firstPaint ? Math.round(perfMetrics.firstPaint) + 'ms' : 'N/A'}
+- First Contentful Paint: ${perfMetrics.firstContentfulPaint ? Math.round(perfMetrics.firstContentfulPaint) + 'ms' : 'N/A'}
+- Largest Contentful Paint: ${perfMetrics.largestContentfulPaint ? Math.round(perfMetrics.largestContentfulPaint) + 'ms' : 'N/A'}
+- Cumulative Layout Shift: ${perfMetrics.cumulativeLayoutShift}
+- Total Resources: ${perfMetrics.totalResources}
+${perfMetrics.resourceBreakdown ? `- Resource Breakdown: ${JSON.stringify(perfMetrics.resourceBreakdown)}` : ''}
 
 CONSOLE ERRORS (${diagnostics?.consoleErrors?.length || 0}):
 ${(diagnostics?.consoleErrors || []).slice(0, 10).map(e => `  ❌ ${e.text}`).join('\n') || '  None detected'}
