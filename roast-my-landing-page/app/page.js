@@ -552,7 +552,7 @@ export default function Home() {
                   background="linear-gradient(135deg, #ea580c, #dc2626)"
                   borderRadius="12px"
                   className="w-full py-3 text-sm font-bold"
-                  onClick={() => window.location.href = `/api/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID || ''}`}
+                  onClick={() => window.location.href = 'https://buy.polar.sh/polar_cl_zVNC0elLFisScIm1LaMySYJYt1C6mBmmDtKKc1k4M5n'}
                 >
                   Request Full Autopsy
                 </ShimmerButton>

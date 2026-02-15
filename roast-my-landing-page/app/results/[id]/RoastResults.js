@@ -868,7 +868,7 @@ export default function RoastResults({ result }) {
                 background="linear-gradient(135deg, #ea580c, #dc2626)"
                 borderRadius="12px"
                 className="px-7 py-3.5 font-bold"
-                onClick={() => window.location.href = `/api/checkout?products=${process.env.NEXT_PUBLIC_POLAR_PRODUCT_ID || ''}`}
+                onClick={() => window.location.href = 'https://buy.polar.sh/polar_cl_zVNC0elLFisScIm1LaMySYJYt1C6mBmmDtKKc1k4M5n'}
               >
                 Get the Full Autopsy — $29 <ArrowRight className="w-4 h-4 ml-2" />
               </ShimmerButton>
