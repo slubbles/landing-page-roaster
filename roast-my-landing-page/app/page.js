@@ -218,18 +218,18 @@ export default function Home() {
         {/* Headline with BlurFade */}
         <BlurFade delay={0.2}>
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-6">
-            I will <span className="gradient-text">brutally roast</span>
+            Your landing page is
             <br />
-            your website
+            <span className="gradient-text">leaking conversions</span>
           </h1>
         </BlurFade>
 
         {/* Subheadline */}
         <BlurFade delay={0.3}>
           <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-            Paste your URL. I&apos;ll open your console, read your code, check your
-            accessibility, time your load speed, and tell you everything that&apos;s wrong
-            — with sarcasm. Don&apos;t say I didn&apos;t warn you.
+            Paste your URL. Our AI opens your browser console, screenshots every breakpoint,
+            audits accessibility &amp; security, times your load speed, and delivers a
+            brutally honest teardown — in 30 seconds.
           </p>
         </BlurFade>
 
@@ -239,8 +239,10 @@ export default function Home() {
             <div className="relative rounded-2xl border border-zinc-800 bg-zinc-900/80 backdrop-blur-sm p-1.5 space-y-1.5">
               <BorderBeam size={250} duration={12} delay={9} />
               <div className="flex gap-2">
+                <label htmlFor="url-input" className="sr-only">Your landing page URL</label>
                 <input
-                  type="text"
+                  id="url-input"
+                  type="url"
                   value={url}
                   onChange={(e) => setUrl(e.target.value)}
                   placeholder="https://your-landing-page.com"
@@ -278,7 +280,9 @@ export default function Home() {
 
               {/* Optional email */}
               <div className="flex items-center gap-2 px-3 pb-1">
+                <label htmlFor="email-input" className="sr-only">Your email (optional)</label>
                 <input
+                  id="email-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -308,9 +312,9 @@ export default function Home() {
         {/* Trust line */}
         <BlurFade delay={0.5}>
           <div className="flex items-center justify-center gap-6 mt-6 text-xs text-zinc-600">
-            <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-600" /> Free. Actually free.</span>
-            <span className="hidden sm:flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> Console + network + a11y scan</span>
-            <span className="flex items-center gap-1"><Target className="w-3 h-3 text-blue-600" /> Copy-paste AI fix prompt</span>
+            <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-600" /> Free — no signup</span>
+            <span className="hidden sm:flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> Console + a11y + security scan</span>
+            <span className="flex items-center gap-1"><Target className="w-3 h-3 text-blue-600" /> AI fix prompt included</span>
           </div>
         </BlurFade>
 
@@ -384,7 +388,7 @@ export default function Home() {
             <BlurFade key={i} delay={0.2 + i * 0.15}>
               <MagicCard className="p-6 text-center" gradientColor="#ff6b3520">
                 <div className="text-5xl font-black gradient-text mb-4">{step.num}</div>
-                <h3 className="text-lg font-semibold mb-2">{step.title}</h3>
+                <h2 className="text-lg font-semibold mb-2">{step.title}</h2>
                 <p className="text-zinc-500 text-sm leading-relaxed">{step.desc}</p>
               </MagicCard>
             </BlurFade>
@@ -429,7 +433,7 @@ export default function Home() {
             <BlurFade key={i} delay={0.15 + i * 0.05}>
               <MagicCard className="p-5" gradientColor="#ff6b3515">
                 <feature.icon className="w-5 h-5 text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
-                <h3 className="font-semibold text-sm mb-1">{feature.title}</h3>
+                <h2 className="font-semibold text-sm mb-1">{feature.title}</h2>
                 <p className="text-zinc-500 text-xs leading-relaxed">{feature.desc}</p>
               </MagicCard>
             </BlurFade>
@@ -441,9 +445,10 @@ export default function Home() {
       <section className="relative z-10 px-6 py-20 max-w-4xl mx-auto">
         <BlurFade delay={0.1}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">Even Stripe got roasted</h2>
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Even Stripe scored 72/100</h2>
             <p className="text-zinc-500 max-w-lg mx-auto">
-              Nobody is safe. Not even billion-dollar companies.
+              We roasted stripe.com live. Here&apos;s their actual score.
+              <a href="/examples" className="text-orange-400 hover:text-orange-300 ml-1">See all examples &rarr;</a>
             </p>
           </div>
         </BlurFade>
@@ -515,7 +520,7 @@ export default function Home() {
               </ul>
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="w-full py-3 rounded-xl border border-zinc-700 text-sm font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="w-full py-3 rounded-xl border border-zinc-700 text-sm font-semibold hover:bg-zinc-800 transition-colors cursor-pointer min-h-[48px]"
               >
                 Get Free Roast
               </button>
@@ -581,20 +586,17 @@ export default function Home() {
             </h2>
             <p className="text-zinc-400 text-lg mb-8">
               Every hour you wait, someone bounces off your page and buys from your competitor.
-              <br />
-              <span className="text-orange-400/70">Don&apos;t say we didn&apos;t warn you.</span>
             </p>
             <ShimmerButton
               shimmerColor="#ff6b35"
               background="linear-gradient(135deg, #ea580c, #dc2626)"
               borderRadius="12px"
               shimmerDuration="2s"
-              className="px-8 py-4 text-lg font-bold mx-auto"
+              className="px-8 py-4 text-lg font-bold mx-auto min-h-[52px]"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <Flame className="w-5 h-5 mr-2" />
-              Fine, roast me
-              <ArrowRight className="w-5 h-5 ml-2" />
+              Roast My Page Free
             </ShimmerButton>
           </div>
         </BlurFade>
