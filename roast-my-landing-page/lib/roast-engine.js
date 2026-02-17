@@ -790,3 +790,102 @@ Respond with ONLY valid JSON (no markdown fences). Be BRUTALLY SARCASTIC. Refere
     clearTimeout(timeout);
   }
 }
+
+/**
+ * Generate PRO-tier deep analysis: rewrites, competitor-aware fixes, prioritized action plan.
+ * Called AFTER a free roast exists — takes the same scraped data + the free roast results.
+ */
+export async function generateProAnalysis(scrapedData, freeRoast) {
+  const { pageData } = scrapedData;
+
+  const prompt = `You are a world-class CRO consultant and conversion copywriter. A client just received a landing page audit (score: ${freeRoast.overallScore}/100). Now they've paid for the FULL AUTOPSY — your job is to give them READY-TO-PASTE rewrites and an implementation plan so specific they can fix everything tonight.
+
+PAGE CONTEXT:
+URL: ${pageData.url}
+Title: "${pageData.title}"
+Current H1: "${pageData.headings.find(h => h.tag === 'H1')?.text || 'None'}"
+Current CTAs: ${pageData.buttons.slice(0, 10).map(b => `"${b.text}"`).join(', ')}
+Word count: ${pageData.wordCount}
+
+FREE ROAST SUMMARY:
+Score: ${freeRoast.overallScore}/100
+Verdict: ${freeRoast.verdict}
+Top Issues: ${(freeRoast.topPriorities || []).join(' | ')}
+Headline Score: ${freeRoast.headline?.score}/10
+CTA Score: ${freeRoast.cta?.score}/10
+Copy Score: ${freeRoast.copywriting?.score}/10
+Social Proof Score: ${freeRoast.socialProof?.score}/10
+
+Respond with ONLY valid JSON (no markdown fences):
+
+{
+  "headlineRewrites": [
+    { "text": "<rewritten headline>", "reasoning": "<why this works better>" },
+    { "text": "<rewritten headline>", "reasoning": "<why this works better>" },
+    { "text": "<rewritten headline>", "reasoning": "<why this works better>" }
+  ],
+  "subheadlineRewrite": "<rewritten subheadline>",
+  "ctaRewrites": [
+    { "text": "<rewritten CTA button text>", "reasoning": "<why this converts better>" },
+    { "text": "<rewritten CTA button text>", "reasoning": "<why this converts better>" },
+    { "text": "<rewritten CTA button text>", "reasoning": "<why this converts better>" }
+  ],
+  "socialProofTemplates": [
+    "<testimonial template they can fill in, specific to their product/niche>",
+    "<testimonial template they can fill in>",
+    "<testimonial template they can fill in>"
+  ],
+  "aboveTheFoldRewrite": "<complete hero section copy: headline + subheadline + CTA, formatted as markdown>",
+  "prioritizedFixPlan": [
+    { "priority": 1, "task": "<specific task>", "timeEstimate": "<X min>", "impact": "<high/medium/low>", "predictedScoreGain": <points> },
+    { "priority": 2, "task": "<specific task>", "timeEstimate": "<X min>", "impact": "<high/medium/low>", "predictedScoreGain": <points> },
+    { "priority": 3, "task": "<specific task>", "timeEstimate": "<X min>", "impact": "<high/medium/low>", "predictedScoreGain": <points> },
+    { "priority": 4, "task": "<specific task>", "timeEstimate": "<X min>", "impact": "<high/medium/low>", "predictedScoreGain": <points> },
+    { "priority": 5, "task": "<specific task>", "timeEstimate": "<X min>", "impact": "<high/medium/low>", "predictedScoreGain": <points> }
+  ],
+  "predictedScoreAfterFixes": <number 1-100>,
+  "copywritingDeepDive": "<2-3 paragraphs analyzing their copy voice, target audience assumptions, and specific language fixes>",
+  "technicalFixes": [
+    { "issue": "<specific technical issue from diagnostics>", "fix": "<exact code change or config>" },
+    { "issue": "<specific technical issue>", "fix": "<exact code change or config>" },
+    { "issue": "<specific technical issue>", "fix": "<exact code change or config>" }
+  ]
+}`;
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), AI_BUDGET_MS);
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': process.env.ANTHROPIC_API_KEY,
+        'anthropic-version': '2023-06-01',
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 4000,
+        messages: [{ role: 'user', content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+
+    if (!response.ok) {
+      const err = await response.text();
+      throw new Error(`Claude API error: ${response.status} — ${err}`);
+    }
+
+    const data = await response.json();
+    const text = data.content[0].text;
+
+    const jsonMatch = text.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      throw new Error('Failed to parse PRO analysis from AI response');
+    }
+
+    return JSON.parse(jsonMatch[0]);
+  } finally {
+    clearTimeout(timeout);
+  }
+}

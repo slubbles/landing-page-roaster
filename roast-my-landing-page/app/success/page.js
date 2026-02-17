@@ -1,5 +1,6 @@
 import { Polar } from '@polar-sh/sdk';
-import { Flame, CheckCircle2, ArrowRight } from 'lucide-react';
+import { redirect } from 'next/navigation';
+import { Flame, CheckCircle2, ArrowRight, Loader2 } from 'lucide-react';
 
 export default async function SuccessPage({ searchParams }) {
   const { checkout_id } = await searchParams;
@@ -20,6 +21,11 @@ export default async function SuccessPage({ searchParams }) {
 
   const isPaid = status === 'succeeded' || status === 'confirmed';
 
+  // If payment confirmed and we have a roastId, redirect right to results
+  if (isPaid && metadata.roastId) {
+    redirect(`/results/${metadata.roastId}`);
+  }
+
   return (
     <main className="min-h-screen flex items-center justify-center px-6">
       <div className="text-center max-w-md">
@@ -30,26 +36,18 @@ export default async function SuccessPage({ searchParams }) {
             </div>
             <h1 className="text-3xl font-black mb-3">Payment Confirmed!</h1>
             <p className="text-zinc-400 mb-8 leading-relaxed">
-              Your PRO roast is being prepared. You&apos;ll receive the full deep-dive report
-              at your email shortly.
+              Your Full Autopsy is being generated. This takes about 30 seconds.
+              Refresh this page or go back to your results.
             </p>
-            {metadata.roastId && (
-              <a
-                href={`/results/${metadata.roastId}`}
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-red-500 font-bold hover:from-orange-400 hover:to-red-400 transition-all"
-              >
-                View Your Roast <ArrowRight className="w-4 h-4" />
-              </a>
-            )}
           </>
         ) : (
           <>
-            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-6">
+            <div className="w-16 h-16 rounded-full bg-zinc-800 flex items-center justify-center mx-auto mb-6 animate-pulse">
               <Flame className="w-8 h-8 text-orange-500" />
             </div>
-            <h1 className="text-3xl font-black mb-3">Processing...</h1>
+            <h1 className="text-3xl font-black mb-3">Processing payment...</h1>
             <p className="text-zinc-400 mb-8 leading-relaxed">
-              We&apos;re confirming your payment. This page will update automatically, or check your email.
+              Hang tight — we&apos;re confirming your payment. This usually takes just a few seconds.
             </p>
           </>
         )}

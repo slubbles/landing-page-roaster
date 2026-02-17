@@ -561,7 +561,7 @@ export default function Home() {
               <div className="text-4xl font-black mb-1">$0</div>
               <p className="text-zinc-500 text-sm mb-8">One page, maximum damage</p>
               <ul className="space-y-3 mb-8 text-sm">
-                {['Conversion score (prepare yourself)', 'Console errors & bug detection', '9 category breakdown', 'Sarcastic AI commentary', 'Copy-paste AI fix prompt'].map((item, i) => (
+                {['Conversion score (prepare yourself)', 'Console errors & bug detection', '9 category breakdown', 'Sarcastic AI commentary', 'Top issues highlighted'].map((item, i) => (
                   <li key={i} className="flex items-center gap-2 text-zinc-300">
                     <Check className="w-4 h-4 text-green-500 shrink-0" />
                     {item}
@@ -596,13 +596,13 @@ export default function Home() {
                 <ul className="space-y-3 mb-8 text-sm">
                   {[
                     'Everything in The Roast',
-                    'Competitor teardown (3 sites)',
-                    'A/B test ammunition',
-                    'Full copy rewrites (we wrote better ones)',
-                    'Conversion lift estimate',
-                    'Shareable report link',
-                    'Priority email support',
-                    'We actually feel bad for you',
+                    '3 rewritten headlines (copy-paste ready)',
+                    '3 better CTAs with reasoning',
+                    'Complete hero section rewrite',
+                    'Testimonial templates for your product',
+                    'Prioritized fix plan with time estimates',
+                    'AI fix prompt (fixes everything at once)',
+                    'Technical code-level fixes',
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-zinc-300">
                       <Check className="w-4 h-4 text-orange-500 shrink-0" />
