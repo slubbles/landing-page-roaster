@@ -20,6 +20,10 @@ import { ShimmerButton } from '../../components/magicui/shimmer-button';
 import { ShineBorder } from '../../components/magicui/shine-border';
 import { BorderBeam } from '../../components/magicui/border-beam';
 import { Meteors } from '../../components/magicui/meteors';
+import { Particles } from '../../components/magicui/particles';
+import { DotPattern } from '../../components/magicui/dot-pattern';
+import { NumberTicker } from '../../components/magicui/number-ticker';
+import { AnimatedGradientText } from '../../components/magicui/animated-gradient-text';
 import { cn } from '../../lib/utils';
 
 const SUBSCRIBE_URL = process.env.NEXT_PUBLIC_POLAR_SUBSCRIBE_URL || '#';
@@ -63,7 +67,8 @@ export default function DashboardClient({ user, session, roasts }) {
   };
 
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen relative">
+      <Particles className="absolute inset-0 z-0" quantity={30} color="#ff6b35" size={0.3} />
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 py-4 border-b border-zinc-900 max-w-6xl mx-auto">
         <a href="/" className="flex items-center gap-2 text-white hover:text-orange-400 transition-colors">
@@ -92,7 +97,7 @@ export default function DashboardClient({ user, session, roasts }) {
         </div>
       </nav>
 
-      <div className="max-w-5xl mx-auto px-6 py-10">
+      <div className="max-w-5xl mx-auto px-6 py-10 relative z-10">
         {/* Greeting */}
         <BlurFade delay={0.05}>
           <h1 className="text-3xl font-black mb-1">
@@ -144,7 +149,9 @@ export default function DashboardClient({ user, session, roasts }) {
 
         {/* Roast form */}
         <BlurFade delay={0.15}>
-          <MagicCard className="p-6 mb-10" gradientColor="#ff6b3510">
+          <div className="relative">
+            <BorderBeam size={200} duration={15} colorFrom="#ff6b35" colorTo="#e63946" />
+            <MagicCard className="p-6 mb-10" gradientColor="#ff6b3510">
             <h2 className="font-bold text-lg mb-4 flex items-center gap-2">
               <Flame className="w-5 h-5 text-orange-500" /> Roast a Page
             </h2>
@@ -183,7 +190,8 @@ export default function DashboardClient({ user, session, roasts }) {
               </ShimmerButton>
             </form>
             {error && <p className="text-red-400 text-sm mt-3">{error}</p>}
-          </MagicCard>
+            </MagicCard>
+          </div>
         </BlurFade>
 
         {/* Roast History */}
@@ -239,18 +247,18 @@ export default function DashboardClient({ user, session, roasts }) {
           <BlurFade delay={0.3}>
             <div className="grid grid-cols-3 gap-4 mt-8">
               <MagicCard className="p-4 text-center" gradientColor="#ff6b3508">
-                <p className="text-2xl font-black text-orange-400">{roasts.length}</p>
+                <p className="text-2xl font-black text-orange-400"><NumberTicker value={roasts.length} /></p>
                 <p className="text-xs text-zinc-600 uppercase">Total Roasts</p>
               </MagicCard>
               <MagicCard className="p-4 text-center" gradientColor="#22c55e08">
                 <p className={cn('text-2xl font-black', scoreColor(Math.max(...roasts.map(r => r.score || 0))))}>
-                  {Math.max(...roasts.map(r => r.score || 0))}
+                  <NumberTicker value={Math.max(...roasts.map(r => r.score || 0))} />
                 </p>
                 <p className="text-xs text-zinc-600 uppercase">Best Score</p>
               </MagicCard>
               <MagicCard className="p-4 text-center" gradientColor="#3b82f608">
                 <p className="text-2xl font-black text-blue-400">
-                  {Math.round(roasts.reduce((sum, r) => sum + (r.score || 0), 0) / roasts.length)}
+                  <NumberTicker value={Math.round(roasts.reduce((sum, r) => sum + (r.score || 0), 0) / roasts.length)} />
                 </p>
                 <p className="text-xs text-zinc-600 uppercase">Avg Score</p>
               </MagicCard>
