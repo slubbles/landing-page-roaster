@@ -1,6 +1,8 @@
-import { scrapeLandingPage, generateRoast } from '../../../lib/roast-engine.js';
+import { scrapeLandingPage, generateRoast, generateProAnalysis } from '../../../lib/roast-engine.js';
 import { saveRoast } from '../../../lib/storage.js';
 import { checkRateLimit, getClientIp } from '../../../lib/rate-limit.js';
+import { auth } from '../../../auth';
+import { getUser, addRoastToUser } from '../../../lib/user-storage.js';
 import crypto from 'crypto';
 
 export const maxDuration = 60; // Vercel Pro allows up to 300s, free = 60s
@@ -83,8 +85,42 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     };
 
+    // Step 3b: If user is a subscriber, auto-generate PRO analysis
+    let isSubscriber = false;
+    let userEmail = null;
+    try {
+      const session = await auth();
+      if (session?.user?.email) {
+        userEmail = session.user.email;
+        const user = await getUser(userEmail);
+        if (user?.subscriptionStatus === 'active') {
+          isSubscriber = true;
+          console.log(`[ROAST ${id}] Subscriber detected (${userEmail}), generating PRO analysis...`);
+          try {
+            const proAnalysis = await generateProAnalysis(scrapedData, roast);
+            result.proAnalysis = proAnalysis;
+            console.log(`[ROAST ${id}] PRO analysis generated for subscriber`);
+          } catch (proErr) {
+            console.error(`[ROAST ${id}] PRO analysis failed (continuing without):`, proErr.message);
+          }
+        }
+      }
+    } catch (authErr) {
+      // Auth check failed — not critical, continue with free roast
+      console.warn(`[ROAST ${id}] Auth check failed:`, authErr.message);
+    }
+
     // Step 4: Persist
     await saveRoast(id, result);
+
+    // Step 4b: Link roast to user account if logged in
+    if (userEmail) {
+      try {
+        await addRoastToUser(userEmail, id);
+      } catch (linkErr) {
+        console.warn(`[ROAST ${id}] Failed to link roast to user:`, linkErr.message);
+      }
+    }
 
     console.log(`[ROAST ${id}] Complete! Score: ${roast.overallScore}/100`);
 

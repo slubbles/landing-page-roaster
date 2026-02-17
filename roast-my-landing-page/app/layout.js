@@ -1,6 +1,7 @@
 import './globals.css';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import SessionWrapper from '../components/auth/SessionWrapper';
 
 export const metadata = {
   title: 'PageRoast — AI-Powered Landing Page Roast',
@@ -28,7 +29,9 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        {children}
+        <SessionWrapper>
+          {children}
+        </SessionWrapper>
         <Analytics />
         <SpeedInsights />
       </body>

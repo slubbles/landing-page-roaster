@@ -36,6 +36,7 @@ import { AnimatedCircularProgressBar } from '../components/magicui/animated-circ
 import { cn } from '../lib/utils';
 import { TypingAnimation } from '../components/magicui/typing-animation';
 import { DotPattern } from '../components/magicui/dot-pattern';
+import UserNav from '../components/auth/UserNav';
 
 const FEATURES = [
   { icon: Target, title: 'Hero Section', desc: 'We\'ll tell you if your hero makes people scroll... or leave forever.' },
@@ -220,6 +221,7 @@ export default function Home() {
           <a href="#pricing" className="text-sm text-zinc-400 hover:text-white transition-colors">
             Pricing
           </a>
+          <UserNav />
         </div>
       </nav>
 
@@ -590,19 +592,23 @@ export default function Home() {
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-orange-500 to-red-500 rounded-full text-xs font-bold z-10">
                   MOST POPULAR
                 </div>
-                <div className="text-sm font-medium text-orange-400 mb-2">The Full Autopsy</div>
-                <div className="text-4xl font-black mb-1">$29</div>
-                <p className="text-zinc-500 text-sm mb-8">For people who actually want to fix their site</p>
+                <div className="text-sm font-medium text-orange-400 mb-2">PRO</div>
+                <div className="flex items-baseline gap-1 mb-1">
+                  <span className="text-4xl font-black">$5</span>
+                  <span className="text-zinc-500 text-sm">/month</span>
+                </div>
+                <p className="text-zinc-500 text-sm mb-8">Unlimited PRO roasts. Cancel anytime.</p>
                 <ul className="space-y-3 mb-8 text-sm">
                   {[
                     'Everything in The Roast',
+                    'Unlimited PRO roasts per month',
                     '3 rewritten headlines (copy-paste ready)',
                     '3 better CTAs with reasoning',
                     'Complete hero section rewrite',
                     'Testimonial templates for your product',
                     'Prioritized fix plan with time estimates',
                     'AI fix prompt (fixes everything at once)',
-                    'Technical code-level fixes',
+                    'Dashboard with roast history',
                   ].map((item, i) => (
                     <li key={i} className="flex items-center gap-2 text-zinc-300">
                       <Check className="w-4 h-4 text-orange-500 shrink-0" />
@@ -615,9 +621,9 @@ export default function Home() {
                   background="linear-gradient(135deg, #ea580c, #dc2626)"
                   borderRadius="12px"
                   className="w-full py-3 text-sm font-bold"
-                  onClick={() => window.location.href = 'https://buy.polar.sh/polar_cl_zVNC0elLFisScIm1LaMySYJYt1C6mBmmDtKKc1k4M5n'}
+                  onClick={() => window.location.href = '/login'}
                 >
-                  Request Full Autopsy
+                  Get Started
                 </ShimmerButton>
               </ShineBorder>
             </div>

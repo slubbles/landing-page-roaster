@@ -78,7 +78,10 @@ function rawHex(score, max = 100) {
 /* ── Upgrade CTA (used in multiple places) ───────────── */
 
 function UpgradeCTA({ roastId, compact = false, label }) {
-  const checkoutUrl = `https://buy.polar.sh/polar_cl_zVNC0elLFisScIm1LaMySYJYt1C6mBmmDtKKc1k4M5n?metadata[roastId]=${roastId}`;
+  const handleUpgrade = () => {
+    // Send to login/dashboard — subscription is account-based
+    window.location.href = '/login';
+  };
 
   if (compact) {
     return (
@@ -87,10 +90,10 @@ function UpgradeCTA({ roastId, compact = false, label }) {
         background="linear-gradient(135deg, #ea580c, #dc2626)"
         borderRadius="10px"
         className="px-5 py-2.5 text-sm font-bold"
-        onClick={() => window.location.href = checkoutUrl}
+        onClick={handleUpgrade}
       >
         <Crown className="w-4 h-4 mr-1.5" />
-        {label || 'Unlock Full Autopsy — $29'}
+        {label || 'Subscribe for $5/mo'}
       </ShimmerButton>
     );
   }
@@ -101,10 +104,10 @@ function UpgradeCTA({ roastId, compact = false, label }) {
       background="linear-gradient(135deg, #ea580c, #dc2626)"
       borderRadius="12px"
       className="px-7 py-3.5 font-bold"
-      onClick={() => window.location.href = checkoutUrl}
+      onClick={handleUpgrade}
     >
       <Crown className="w-5 h-5 mr-2" />
-      {label || 'Get the Full Autopsy — $29'} <ArrowRight className="w-4 h-4 ml-2" />
+      {label || 'Subscribe for $5/mo — Unlimited PRO Roasts'} <ArrowRight className="w-4 h-4 ml-2" />
     </ShimmerButton>
   );
 }
@@ -1039,10 +1042,10 @@ export default function RoastResults({ result }) {
               <>
                 <h2 className="text-2xl font-extrabold mb-3">Want ready-to-paste fixes?</h2>
                 <p className="text-zinc-500 max-w-md mx-auto mb-4 text-sm leading-relaxed">
-                  The Full Autopsy gives you 3 rewritten headlines, 3 better CTAs, testimonial templates, a prioritized fix plan, and one AI prompt to fix everything at once.
+                  Subscribe for $5/mo and every roast includes headline rewrites, CTA rewrites, testimonial templates, a prioritized fix plan, and the AI prompt that fixes everything.
                 </p>
                 <div className="flex flex-wrap justify-center gap-2 mb-8 max-w-md mx-auto">
-                  {['3 headline rewrites', '3 CTA rewrites', 'Fix plan with time estimates', 'AI fix prompt', 'Testimonial templates', 'Technical fixes'].map((item) => (
+                  {['Unlimited PRO roasts', '3 headline rewrites', '3 CTA rewrites', 'Fix plan', 'AI fix prompt', 'Dashboard & history'].map((item) => (
                     <span key={item} className="px-2.5 py-1 rounded-lg bg-orange-500/10 border border-orange-500/20 text-xs text-orange-300 font-medium">
                       {item}
                     </span>
