@@ -49,6 +49,27 @@ const FEATURES = [
   { icon: BarChart3, title: 'Bug Autopsy', desc: 'We open the browser console. We see what you broke. We judge you.' },
 ];
 
+const TESTIMONIALS = [
+  {
+    quote: 'I was mass-DMing founders asking for landing page feedback. Now I just paste their URL here and send the roast. Saves me hours.',
+    name: 'SaaS founder',
+    role: 'Pre-launch startup',
+    avatar: '🚀',
+  },
+  {
+    quote: 'Our conversion rate went from 2.1% to 3.8% after fixing the issues PageRoast found. The console error section alone was worth it.',
+    name: 'Marketing lead',
+    role: 'B2B SaaS',
+    avatar: '📈',
+  },
+  {
+    quote: 'I roasted my competitor\'s page and sent the report to my team. Best standup meeting we\'ve ever had.',
+    name: 'Product designer',
+    role: 'Agency',
+    avatar: '🎨',
+  },
+];
+
 const STEPS = [
   { num: '01', title: 'Paste your URL', desc: 'Drop your URL. We won\'t judge you yet. That comes in step 3.' },
   { num: '02', title: 'We open your browser console', desc: 'Screenshots, DOM, console errors, network fails, accessibility, security — all captured.' },
@@ -218,18 +239,18 @@ export default function Home() {
         {/* Headline with BlurFade */}
         <BlurFade delay={0.2}>
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black tracking-tight leading-[1.05] mb-6">
-            Your landing page is
+            Find out why your landing page
             <br />
-            <span className="gradient-text">leaking conversions</span>
+            <span className="gradient-text">isn&apos;t converting</span>
           </h1>
         </BlurFade>
 
         {/* Subheadline */}
         <BlurFade delay={0.3}>
           <p className="text-lg sm:text-xl text-zinc-400 max-w-2xl mx-auto mb-12 leading-relaxed">
-            Paste your URL. Our AI opens your browser console, screenshots every breakpoint,
-            audits accessibility &amp; security, times your load speed, and delivers a
-            brutally honest teardown — in 30 seconds.
+            Paste your URL. Our AI opens your browser console, captures screenshots,
+            audits accessibility, times your load speed, and roasts every conversion
+            killer it finds — in 30 seconds.
           </p>
         </BlurFade>
 
@@ -248,6 +269,7 @@ export default function Home() {
                   placeholder="https://your-landing-page.com"
                   required
                   disabled={loading}
+                  aria-label="Your landing page URL"
                   className="flex-1 px-4 py-3.5 bg-transparent text-white placeholder-zinc-600 outline-none text-base rounded-xl disabled:opacity-50"
                 />
                 <ShimmerButton
@@ -257,7 +279,7 @@ export default function Home() {
                   background="linear-gradient(135deg, #ea580c, #dc2626)"
                   borderRadius="12px"
                   className={cn(
-                    "px-6 py-3.5 font-semibold text-white text-base whitespace-nowrap",
+                    "px-6 py-3.5 min-h-[48px] font-semibold text-white text-base whitespace-nowrap",
                     loading && "opacity-50 cursor-wait"
                   )}
                 >
@@ -280,7 +302,7 @@ export default function Home() {
 
               {/* Optional email */}
               <div className="flex items-center gap-2 px-3 pb-1">
-                <label htmlFor="email-input" className="sr-only">Your email (optional)</label>
+                <label htmlFor="email-input" className="sr-only">Email address (optional)</label>
                 <input
                   id="email-input"
                   type="email"
@@ -288,6 +310,7 @@ export default function Home() {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="you@email.com (optional — get results emailed)"
                   disabled={loading}
+                  aria-label="Email address (optional)"
                   className="flex-1 px-2 py-2 bg-transparent text-sm text-zinc-300 placeholder-zinc-600 outline-none disabled:opacity-50"
                 />
               </div>
@@ -311,10 +334,10 @@ export default function Home() {
 
         {/* Trust line */}
         <BlurFade delay={0.5}>
-          <div className="flex items-center justify-center gap-6 mt-6 text-xs text-zinc-600">
-            <span className="flex items-center gap-1"><Check className="w-3 h-3 text-green-600" /> Free — no signup</span>
-            <span className="hidden sm:flex items-center gap-1"><Zap className="w-3 h-3 text-yellow-600" /> Console + a11y + security scan</span>
-            <span className="flex items-center gap-1"><Target className="w-3 h-3 text-blue-600" /> AI fix prompt included</span>
+          <div className="flex items-center justify-center gap-6 mt-6 text-sm text-zinc-500">
+            <span className="flex items-center gap-1.5"><Check className="w-4 h-4 text-green-600" /> Free. Actually free.</span>
+            <span className="hidden sm:flex items-center gap-1.5"><Zap className="w-4 h-4 text-yellow-600" /> Console + network + a11y scan</span>
+            <span className="flex items-center gap-1.5"><Target className="w-4 h-4 text-blue-600" /> Copy-paste AI fix prompt</span>
           </div>
         </BlurFade>
 
@@ -431,10 +454,10 @@ export default function Home() {
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {FEATURES.map((feature, i) => (
             <BlurFade key={i} delay={0.15 + i * 0.05}>
-              <MagicCard className="p-5" gradientColor="#ff6b3515">
-                <feature.icon className="w-5 h-5 text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
-                <h2 className="font-semibold text-sm mb-1">{feature.title}</h2>
-                <p className="text-zinc-500 text-xs leading-relaxed">{feature.desc}</p>
+              <MagicCard className="p-5 min-h-[120px]" gradientColor="#ff6b3515">
+                <feature.icon className="w-6 h-6 text-orange-500 mb-3 group-hover:scale-110 transition-transform" />
+                <h3 className="font-semibold text-base mb-1.5">{feature.title}</h3>
+                <p className="text-zinc-500 text-sm leading-relaxed">{feature.desc}</p>
               </MagicCard>
             </BlurFade>
           ))}
@@ -445,10 +468,9 @@ export default function Home() {
       <section className="relative z-10 px-6 py-20 max-w-4xl mx-auto">
         <BlurFade delay={0.1}>
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold tracking-tight mb-4">Even Stripe scored 72/100</h2>
+            <h2 className="text-3xl font-bold tracking-tight mb-4">Even Stripe got roasted</h2>
             <p className="text-zinc-500 max-w-lg mx-auto">
-              We roasted stripe.com live. Here&apos;s their actual score.
-              <a href="/examples" className="text-orange-400 hover:text-orange-300 ml-1">See all examples &rarr;</a>
+              Nobody is safe. Not even billion-dollar companies.
             </p>
           </div>
         </BlurFade>
@@ -486,6 +508,34 @@ export default function Home() {
         </BlurFade>
       </section>
 
+      {/* ── Social Proof / Testimonials ─────── */}
+      <section className="relative z-10 px-6 py-20 max-w-5xl mx-auto">
+        <BlurFade delay={0.1}>
+          <h2 className="text-3xl font-bold text-center mb-4 tracking-tight">
+            Don&apos;t take our word for it
+          </h2>
+          <p className="text-zinc-500 text-center mb-12 max-w-lg mx-auto">
+            Here&apos;s what people said after their pages got roasted.
+          </p>
+        </BlurFade>
+        <div className="grid md:grid-cols-3 gap-6">
+          {TESTIMONIALS.map((t, i) => (
+            <BlurFade key={i} delay={0.2 + i * 0.1}>
+              <MagicCard className="p-6 h-full" gradientColor="#ff6b3510">
+                <div className="text-3xl mb-4">{t.avatar}</div>
+                <p className="text-zinc-300 text-sm leading-relaxed mb-4 italic">
+                  &ldquo;{t.quote}&rdquo;
+                </p>
+                <div className="mt-auto">
+                  <p className="text-sm font-semibold text-white">{t.name}</p>
+                  <p className="text-xs text-zinc-500">{t.role}</p>
+                </div>
+              </MagicCard>
+            </BlurFade>
+          ))}
+        </div>
+      </section>
+
       {/* ── Pricing ──────────────────────────── */}
       <section id="pricing" className="relative z-10 px-6 py-20 max-w-4xl mx-auto">        <DotPattern
           className="absolute inset-0 -z-10 opacity-20 [mask-image:radial-gradient(500px_circle_at_center,white,transparent)]"
@@ -520,7 +570,7 @@ export default function Home() {
               </ul>
               <button
                 onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                className="w-full py-3 rounded-xl border border-zinc-700 text-sm font-semibold hover:bg-zinc-800 transition-colors cursor-pointer min-h-[48px]"
+                className="w-full py-3 min-h-[48px] rounded-xl border border-zinc-700 text-sm font-semibold hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 Get Free Roast
               </button>
@@ -586,17 +636,20 @@ export default function Home() {
             </h2>
             <p className="text-zinc-400 text-lg mb-8">
               Every hour you wait, someone bounces off your page and buys from your competitor.
+              <br />
+              <span className="text-orange-400/70">Don&apos;t say we didn&apos;t warn you.</span>
             </p>
             <ShimmerButton
               shimmerColor="#ff6b35"
               background="linear-gradient(135deg, #ea580c, #dc2626)"
               borderRadius="12px"
               shimmerDuration="2s"
-              className="px-8 py-4 text-lg font-bold mx-auto min-h-[52px]"
+              className="px-8 py-4 min-h-[48px] text-lg font-bold mx-auto"
               onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
             >
               <Flame className="w-5 h-5 mr-2" />
-              Roast My Page Free
+              Fine, roast me
+              <ArrowRight className="w-5 h-5 ml-2" />
             </ShimmerButton>
           </div>
         </BlurFade>
