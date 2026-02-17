@@ -452,3 +452,27 @@ When this chat resumes or a new session starts:
 - [ ] Wire email capture to a mailing list service
 - [ ] Implement PRO tier gating (differentiate free vs paid roasts)
 - [ ] Iterate based on real user feedback
+
+### Session 7 — Feb 17, 2026 (Dogfood Audit — Self-Roast Fixes)
+
+**Status:** ✅ COMPLETE
+
+**What Happened:**
+- **Dogfooded the product** — roasted our own landing page, got 72/100
+- **Fixed ALL issues identified in the self-roast:**
+  - **H1 headline** — Rewritten from "I will brutally roast your website" to benefit-focused "Find out why your landing page isn't converting" (also fixes false-positive typo from `<br/>` between words)
+  - **Heading hierarchy** — Fixed H1→H3 skip. Now: H1 (hero) → H2 (how-it-works steps) → H2 (features section) → H3 (feature cards) → H2 (remaining sections). Valid HTML heading order.
+  - **Form accessibility** — Added `<label>` (sr-only) + `aria-label` + `id` attributes to both URL and email inputs. Changed URL input `type="text"` → `type="url"`.
+  - **Social proof** — Added TESTIMONIALS section (3 cards with quotes, roles, emoji avatars) between features grid and pricing.
+  - **Touch targets** — Added `min-h-[48px]` to ShimmerButtons (hero CTA, final CTA) and pricing buttons. Meets 48px WCAG minimum.
+  - **Text readability** — Trust line: `text-xs` → `text-sm`, icons `w-3` → `w-4`. Feature cards: icons `w-5` → `w-6`, titles `text-sm` → `text-base`, descriptions `text-xs` → `text-sm`. Added `min-h-[120px]` to feature cards.
+  - **Subheadline copywriting** — Rewritten to emphasize what the tool does: "Paste your URL. Our AI opens your browser console, captures screenshots, audits accessibility, times your load speed, and roasts every conversion killer it finds — in 30 seconds."
+
+**Files Changed:**
+- `app/page.js` — 74 insertions, 21 deletions
+
+**Remaining:**
+- [ ] Marketing launch (LAUNCH-COPY.md ready)
+- [ ] Wire email capture to mailing list
+- [ ] Implement PRO tier gating
+- [ ] Re-roast after deploy to measure score improvement
